@@ -1,0 +1,36 @@
+﻿@page "/"
+@using Blazored.LocalStorage
+@using Dropbox.Api
+@inject HttpClient HttpClient;
+@inject ILocalStorageService LocalStorage;
+@inject NavigationManager NavigationManager;
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+<p>@AuthUri</p>
+
+@code {
+    private const string AppKey = "<todo setting>";
+
+    // Add an ApiSecret (from https://www.dropbox.com/developers/apps) here
+    private const string AppSecret = "<todo setting>";
+    public Uri? AuthUri;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accessTokenRaw = await LocalStorage.GetItemAsStringAsync("VaporNotesDropboxAccessToken");
+        if(accessTokenRaw == null)
+        {
+            var authUri = Dropbox.Api.DropboxOAuth2Helper.GetAuthorizeUri(OAuthResponseType.Token, AppKey, redirectUri: "https://localhost:7232/authorize", tokenAccessType: TokenAccessType.Legacy);
+            NavigationManager.NavigateTo(authUri.ToString());
+        }
+        else
+        {
+            var token = System.Text.Json.JsonSerializer.Deserialize<DropboxToken>(accessTokenRaw);
+            Console.WriteLine(token.AccessToken);
+        }        
+    }
+}

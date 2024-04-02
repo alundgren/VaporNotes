@@ -1,0 +1,36 @@
+﻿@page "/authorize"
+@using System.Web
+@using Blazored.LocalStorage
+@inject NavigationManager NavigationManager;
+@inject ILocalStorageService LocalStorage;
+
+<PageTitle>Authorize</PageTitle>
+
+<p>Logged in...</p>
+<p>@AccessToken</p>
+<p>@ExpiresIn</p>
+@code {
+    public string? AccessToken { get; set; }
+    public int? ExpiresIn { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        //var query = HttpUtility.ParseQueryString(.Query);                
+        var fragment = new Uri(NavigationManager.Uri).Fragment;
+        Console.WriteLine(fragment);
+        if((fragment ?? "").StartsWith("#"))
+        {
+            var queryParams = 
+                fragment.Substring(1).Split("&").Select(x =>
+                {
+                    var parts = x.Split("=");
+                    return (parts[0], parts[1]);
+                })
+                .ToDictionary(x => x.Item1, x => x.Item2);
+            var accessToken = queryParams["access_token"];
+            var expiresIn = int.Parse(queryParams["expires_in"]);
+            LocalStorage.SetItemAsStringAsync("VaporNotesDropboxAccessToken", System.Text.Json.JsonSerializer.Serialize(new DropboxToken(accessToken, DateTimeOffset.UtcNow.AddSeconds(expiresIn))));
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}
