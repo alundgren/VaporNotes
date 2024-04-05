@@ -1,6 +1,8 @@
 using Dropbox.Api;
 using System.Text;
 using VaporNotes.Api;
+using VaporNotes.Api.Domain;
+using VaporNotes.Api.Dropbox;
 using VaporNotes.Api.Support;
 
 const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
@@ -57,23 +59,22 @@ app.MapPost("/api/complete-authorize", async (CompleteAuthorizeRequest request) 
         result.RefreshToken
     };
 });
+
+VaporNotesService CreateService(DropboxAccessToken accessToken)
+{
+    var d = new DropboxService(builder.Configuration, accessToken);
+    return new VaporNotesService(d, new VaporNotesClock(), TimeSpan.FromMinutes(1));
+}
+
 app.MapPost("/api/notes/list", async (ListNotesRequest request) =>
 {
-    var client = new DropboxClient(request.AccessToken);
-    var items = await client.Files.ListFolderAsync(new Dropbox.Api.Files.ListFolderArg(""));
-    return items.Entries.Where(x => x.IsFile).Select(x => x.AsFile).Select(x => new
-    {
-        x.PreviewUrl,
-        x.PathDisplay,
-        x.PathLower,
-        x.Id
-    }).ToList();
+    var s = CreateService(new DropboxAccessToken(request.AccessToken));
+    return await s.GetNotesAsync();
 });
 app.MapPost("/api/notes/add-text", async (AddTextNoteRequest request) =>
 {
-    var client = new DropboxClient(request.AccessToken);
-    var result = await client.Files.UploadAsync(new Dropbox.Api.Files.UploadArg("/test.txt"), new MemoryStream(Encoding.UTF8.GetBytes(request.Text)));
-    return result.Id;
+    var s = CreateService(new DropboxAccessToken(request.AccessToken));
+    return await s.AddNoteAsync("Test: " + DateTime.UtcNow.ToString("o"));
 });
 app.MapGet("/api/heartbeat", () =>
 {
@@ -81,28 +82,7 @@ app.MapGet("/api/heartbeat", () =>
 });
 
 /*
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
 .WithName("GetWeatherForecast")
 .WithOpenApi();
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
 */
 app.Run();

@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VaporNotes.Prototype", "Vap
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VaporNotes.Api", "VaporNotes.Api\VaporNotes.Api.csproj", "{4350F7DA-18D0-4AA5-A84D-D29FFDB16BEC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VaporNotes.UnitTests", "VaporNotes.UnitTests\VaporNotes.UnitTests.csproj", "{65374919-58E8-4E59-A13E-FEDEBD506C53}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{4350F7DA-18D0-4AA5-A84D-D29FFDB16BEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4350F7DA-18D0-4AA5-A84D-D29FFDB16BEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4350F7DA-18D0-4AA5-A84D-D29FFDB16BEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65374919-58E8-4E59-A13E-FEDEBD506C53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65374919-58E8-4E59-A13E-FEDEBD506C53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65374919-58E8-4E59-A13E-FEDEBD506C53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65374919-58E8-4E59-A13E-FEDEBD506C53}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
