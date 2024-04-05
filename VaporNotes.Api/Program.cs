@@ -1,3 +1,6 @@
+using Dropbox.Api;
+using System.Text;
+using VaporNotes.Api;
 using VaporNotes.Api.Support;
 
 const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
@@ -31,14 +34,52 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors(ApiCorsPolicyName);
-app.MapPost("/api/authorize", () =>
-{
 
+var appKey = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAppKey");
+var appSecret = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAppSecret");
+
+app.MapPost("/api/begin-authorize", () =>
+{
+    var uiBaseUrl = new Uri(builder.Configuration.GetRequiredSettingValue("VaporNotes:UiBaseUrl"));
+    var loginUrl = Dropbox.Api.DropboxOAuth2Helper.GetAuthorizeUri(OAuthResponseType.Code, appKey, redirectUri: default(string), tokenAccessType: TokenAccessType.Offline);
+    return new
+    {
+        LoginUrl = loginUrl
+    }; 
+});
+app.MapPost("/api/complete-authorize", async (CompleteAuthorizeRequest request) =>
+{
+    var result = await DropboxOAuth2Helper.ProcessCodeFlowAsync(request.Code, appKey, appSecret: appSecret);    
+    return new
+    {
+        result.ExpiresAt,
+        result.AccessToken,
+        result.RefreshToken
+    };
+});
+app.MapPost("/api/notes/list", async (ListNotesRequest request) =>
+{
+    var client = new DropboxClient(request.AccessToken);
+    var items = await client.Files.ListFolderAsync(new Dropbox.Api.Files.ListFolderArg(""));
+    return items.Entries.Where(x => x.IsFile).Select(x => x.AsFile).Select(x => new
+    {
+        x.PreviewUrl,
+        x.PathDisplay,
+        x.PathLower,
+        x.Id
+    }).ToList();
+});
+app.MapPost("/api/notes/add-text", async (AddTextNoteRequest request) =>
+{
+    var client = new DropboxClient(request.AccessToken);
+    var result = await client.Files.UploadAsync(new Dropbox.Api.Files.UploadArg("/test.txt"), new MemoryStream(Encoding.UTF8.GetBytes(request.Text)));
+    return result.Id;
 });
 app.MapGet("/api/heartbeat", () =>
 {
     return "Ok";
 });
+
 /*
 var summaries = new[]
 {

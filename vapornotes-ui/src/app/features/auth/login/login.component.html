@@ -1,0 +1,12 @@
+<div *ngIf="authorizeUrl">
+    <h1>Authorize dropbox</h1>
+    <p>Follow the 'Authorize with dropbox link' to get a code. Then enter that code below to login.</p>
+    <h2>Get a code</h2>
+    <a [href]="authorizeUrl" target="_blank">Authorize with dropbox</a>
+    <hr>
+    <h2>Login with code</h2>
+    <form [formGroup]="loginForm">
+        <input formControlName="code" placeholder="Enter code here" />
+        <button [disabled]="loginForm.invalid" (click)="completeAuthorize($event)">Authorize</button>
+    </form>
+</div>

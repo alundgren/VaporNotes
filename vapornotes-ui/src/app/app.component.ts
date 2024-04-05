@@ -15,9 +15,4 @@ export class AppComponent {
 
     }
     title = 'Vapor notes';
-
-    async ngOnInit() {
-        console.log('test');
-        this.httpClient.get(getApiUrl('api/heartbeat')).subscribe(x => console.log(x));
-    }
 }
