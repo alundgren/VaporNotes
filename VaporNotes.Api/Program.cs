@@ -1,9 +1,9 @@
 using Dropbox.Api;
-using System.Text;
 using VaporNotes.Api;
 using VaporNotes.Api.Domain;
 using VaporNotes.Api.Dropbox;
 using VaporNotes.Api.Support;
+using static Dropbox.Api.TeamLog.EventCategory;
 
 const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
 
@@ -24,6 +24,8 @@ builder.Services.AddCors(options =>
             policy.AllowAnyMethod();
         });
 });
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<BearerToken>();
 
 var app = builder.Build();
 
@@ -42,7 +44,6 @@ var appSecret = builder.Configuration.GetRequiredSettingValue("VaporNotes:Dropbo
 
 app.MapPost("/api/begin-authorize", () =>
 {
-    var uiBaseUrl = new Uri(builder.Configuration.GetRequiredSettingValue("VaporNotes:UiBaseUrl"));
     var loginUrl = Dropbox.Api.DropboxOAuth2Helper.GetAuthorizeUri(OAuthResponseType.Code, appKey, redirectUri: default(string), tokenAccessType: TokenAccessType.Offline);
     return new
     {
@@ -59,6 +60,17 @@ app.MapPost("/api/complete-authorize", async (CompleteAuthorizeRequest request) 
         result.RefreshToken
     };
 });
+app.MapPost("/api/refresh-authorize", async (RefreshAuthorizeRequest request) =>
+{
+    var refresher = new DropboxTokenRefresher(request.RefreshToken, appKey, appSecret, new VaporNotesClock());
+    var result = await refresher.RefreshAccessToken();
+    return new
+    {
+        result.AccessToken,
+        result.RefreshToken,
+        result.ExpiresAt
+    };
+});
 
 VaporNotesService CreateService(DropboxAccessToken accessToken)
 {
@@ -66,14 +78,14 @@ VaporNotesService CreateService(DropboxAccessToken accessToken)
     return new VaporNotesService(d, new VaporNotesClock(), TimeSpan.FromMinutes(1));
 }
 
-app.MapPost("/api/notes/list", async (ListNotesRequest request) =>
+app.MapPost("/api/notes/list", async (BearerToken token, ListNotesRequest request) =>
 {
-    var s = CreateService(new DropboxAccessToken(request.AccessToken));
+    var s = CreateService(new DropboxAccessToken(token.RequiredAccessToken));
     return await s.GetNotesAsync();
 });
-app.MapPost("/api/notes/add-text", async (AddTextNoteRequest request) =>
+app.MapPost("/api/notes/add-text", async (BearerToken token, AddTextNoteRequest request) =>
 {
-    var s = CreateService(new DropboxAccessToken(request.AccessToken));
+    var s = CreateService(new DropboxAccessToken(token.RequiredAccessToken));
     return await s.AddNoteAsync("Test: " + DateTime.UtcNow.ToString("o"));
 });
 app.MapGet("/api/heartbeat", () =>

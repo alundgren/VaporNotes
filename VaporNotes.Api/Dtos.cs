@@ -1,4 +1,5 @@
 ﻿namespace VaporNotes.Api;
 public record CompleteAuthorizeRequest(string Code); //TODO: Required
-public record ListNotesRequest(string AccessToken);
-public record AddTextNoteRequest(string AccessToken, string Text);
+public record RefreshAuthorizeRequest(string RefreshToken); //TODO: Required
+public record ListNotesRequest();
+public record AddTextNoteRequest(string Text);

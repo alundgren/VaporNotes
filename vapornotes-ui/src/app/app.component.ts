@@ -1,7 +1,5 @@
-import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { getApiUrl } from './common';
 
 @Component({
     selector: 'app-root',
@@ -11,7 +9,7 @@ import { getApiUrl } from './common';
     styleUrl: './app.component.scss'
 })
 export class AppComponent {
-    constructor(private httpClient: HttpClient) {
+    constructor() {
 
     }
     title = 'Vapor notes';

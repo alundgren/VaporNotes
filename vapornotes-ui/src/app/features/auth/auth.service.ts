@@ -1,31 +1,55 @@
-
-
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, map  } from 'rxjs';
+import { BehaviorSubject, Observable, map } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { getApiUrl } from '../../common';
+import { ApiService } from '../../api.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
-    constructor(private httpClient: HttpClient) {
+    constructor(private httpClient: HttpClient, private router: Router) {
         const storedAuthRaw = sessionStorage.getItem(SessionStorageTokenKey) ?? localStorage.getItem(LocalStorageTokenKey);
-        const auth : DropboxAuthData = storedAuthRaw ? JSON.parse(storedAuthRaw) : null;
-        this.authState = new BehaviorSubject<{ isAuthenticated: boolean, accessToken ?: string }>(auth
-            ? { isAuthenticated: true, accessToken: auth.accessToken }
-            : { isAuthenticated: false });
+        const auth: DropboxAuthData = storedAuthRaw ? JSON.parse(storedAuthRaw) : null;
+        this.authState = new BehaviorSubject<DropboxAuthData | null>(auth
+            ? auth
+            : null);
     }
 
-    private readonly authState:  BehaviorSubject<{ isAuthenticated: boolean, accessToken ?: string }>;
+    private readonly authState: BehaviorSubject<DropboxAuthData | null>;
 
     isAuthenticated() {
-        return this.authState.value.isAuthenticated;
+        return !!this.authState.value;
     }
 
-    accessToken() {
-        return this.authState.value.accessToken;
+    expireAccessToken() {
+        let a = this.authState.value;
+        if(!a) {
+            return;
+        }
+        this.authState.next({...a, expiresAt: new Date(Date.now() - 5 * 60000) })
+    }
+
+
+    todo change to expiration epoch since time zones keep messing with this
+
+    getAccessTokenOrRedirectToLogin() {
+        let a = this.authState.value;
+        return new Observable<string>(x => {
+            if(a && a.expiresAt > new Date()) {
+                x.next(a.accessToken);
+                x.complete();
+            } else if(!a) {
+                x.complete();
+                this.router.navigateByUrl(this.getLocalLoginUrl());
+            } else {
+                this.httpClient.post<DropboxAuthData>(ApiService.getApiUrl('api/refresh-authorize'), { refreshToken: a.refreshToken }).subscribe(y => {
+                    this.authState.next(y);
+                    x.next(y.accessToken);
+                    x.complete();
+                })
+            }
+        })
     }
 
     getLocalLoginUrl() {
@@ -33,38 +57,17 @@ export class AuthService {
     }
 
     beginDropboxAuthorization() {
-        return this.httpClient.post<{ loginUrl: string }> (getApiUrl('api/begin-authorize'), {}).pipe(map(x => x.loginUrl));
+        return this.httpClient.post<{ loginUrl: string }>(ApiService.getApiUrl('api/begin-authorize'), {}).pipe(map(x => x.loginUrl));
     }
 
     completeDropboxAuthorization(code: string) {
-        return this.httpClient.post<DropboxAuthData> (getApiUrl('api/complete-authorize'), { code }).pipe(map(x => {
+        return this.httpClient.post<DropboxAuthData>(ApiService.getApiUrl('api/complete-authorize'), { code }).pipe(map(x => {
             sessionStorage.setItem(SessionStorageTokenKey, JSON.stringify(x));
             localStorage.setItem(LocalStorageTokenKey, JSON.stringify(x));
-            this.authState.next({ isAuthenticated: true, accessToken: x.accessToken });
+            this.authState.next(x);
             return true;
         }))
     }
-/*
-    login(email: string, password: string, persistRefreshToken: boolean) {
-        return this.apiService.post<AuthData>('v1/identity/login', { email, password }, {
-                handleError: err => {
-                    if(err.status === 401) {
-                        (err as any).message = 'Invalid email or password.';
-                        return throwError(() => err);
-                    } else {
-                        return throwError(() => err);
-                    }
-                }
-        })
-        .pipe(map(x => {
-            sessionStorage.setItem(AccessTokenKey, JSON.stringify(x));
-            if(persistRefreshToken) {
-                localStorage.setItem(RefreshTokenKey, JSON.stringify(x));
-            }
-            this.authState.next({ isAuthenticated: true, accessToken: x.accessToken });
-            return true;
-        }));
-    }*/
 }
 
 const LocalStorageTokenKey = 'vapornotes_dropbox_access_local_2024032401'
