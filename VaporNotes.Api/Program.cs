@@ -41,7 +41,7 @@ app.UseCors(ApiCorsPolicyName);
 
 var appKey = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAppKey");
 var appSecret = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAppSecret");
-
+var clock = new VaporNotesClock();
 app.MapPost("/api/begin-authorize", () =>
 {
     var loginUrl = Dropbox.Api.DropboxOAuth2Helper.GetAuthorizeUri(OAuthResponseType.Code, appKey, redirectUri: default(string), tokenAccessType: TokenAccessType.Offline);
@@ -55,7 +55,9 @@ app.MapPost("/api/complete-authorize", async (CompleteAuthorizeRequest request) 
     var result = await DropboxOAuth2Helper.ProcessCodeFlowAsync(request.Code, appKey, appSecret: appSecret);    
     return new
     {
-        result.ExpiresAt,
+        ExpiresAtEpoch = result.ExpiresAt.HasValue 
+            ? new DateTimeOffset(result.ExpiresAt.Value).ToUnixTimeMilliseconds()
+            : clock.UtcNow.AddHours(1).ToUnixTimeMilliseconds(),
         result.AccessToken,
         result.RefreshToken
     };
@@ -66,9 +68,9 @@ app.MapPost("/api/refresh-authorize", async (RefreshAuthorizeRequest request) =>
     var result = await refresher.RefreshAccessToken();
     return new
     {
+        ExpiresAtEpoch = result.ExpiresAtEpoch,
         result.AccessToken,
-        result.RefreshToken,
-        result.ExpiresAt
+        result.RefreshToken
     };
 });
 

@@ -27,16 +27,13 @@ export class AuthService {
         if(!a) {
             return;
         }
-        this.authState.next({...a, expiresAt: new Date(Date.now() - 5 * 60000) })
+        this.authState.next({...a, expiresAtEpoch: Date.now() - 5000 })
     }
-
-
-    todo change to expiration epoch since time zones keep messing with this
 
     getAccessTokenOrRedirectToLogin() {
         let a = this.authState.value;
         return new Observable<string>(x => {
-            if(a && a.expiresAt > new Date()) {
+            if(a && a.expiresAtEpoch > Date.now()) {
                 x.next(a.accessToken);
                 x.complete();
             } else if(!a) {
@@ -74,7 +71,7 @@ const LocalStorageTokenKey = 'vapornotes_dropbox_access_local_2024032401'
 const SessionStorageTokenKey = 'vapornotes_dropbox_access_refresh_2024032401';
 
 interface DropboxAuthData {
-    expiresAt: Date,
+    expiresAtEpoch: number,
     accessToken: string,
     refreshToken: string
 }

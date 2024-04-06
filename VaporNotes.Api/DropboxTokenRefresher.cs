@@ -5,7 +5,7 @@ namespace VaporNotes.Api;
 
 public class DropboxTokenRefresher(string refreshToken, string appKey, string appSecret, IVaporNotesClock clock)
 {
-    public async Task<(string AccessToken, DateTime ExpiresAt, string RefreshToken)> RefreshAccessToken()
+    public async Task<(string AccessToken, long ExpiresAtEpoch, string RefreshToken)> RefreshAccessToken()
     {
         using var client = new HttpClient();
 
@@ -30,7 +30,7 @@ public class DropboxTokenRefresher(string refreshToken, string appKey, string ap
         var tokenResult = JsonConvert.DeserializeObject<DropboxRefreshedToken>(jsonContent);
         if (tokenResult?.access_token == null)
             throw new Exception("Missing token in response");
-        return (tokenResult.access_token, clock.UtcNow.DateTime.AddMinutes(tokenResult.expires_in), tokenResult.refresh_token ?? refreshToken);
+        return (tokenResult.access_token, clock.UtcNow.AddMinutes(tokenResult.expires_in).ToUnixTimeMilliseconds(), tokenResult.refresh_token ?? refreshToken);
     }
     private record DropboxRefreshedToken(string access_token, int expires_in, string refresh_token);
 }
