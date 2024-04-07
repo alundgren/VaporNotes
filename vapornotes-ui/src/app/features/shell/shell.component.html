@@ -1,0 +1,26 @@
+<div class="container-fluid">
+    <header class="bg-primary text-white d-flex justify-content-between align-items-center header">
+        <!-- Logo on the left -->
+        <div class="ms-3">
+            <img src="/assets/vapornotes-logo.png" alt="Logo" height="50">
+        </div>
+
+        <!-- Middle content can go here or you can leave it empty -->
+        <div class="flex-grow-1 text-center">
+            Vapor notes
+        </div>
+
+        <!-- Logout link on the right -->
+        <div class="me-3">
+            <a href="logout_url" class="text-white">Logout</a>
+        </div>
+    </header>
+
+    <div class="content bg-dark d-flex align-items-center justify-content-center">
+        <ng-content select="[body]"></ng-content>
+    </div>
+
+    <footer class="bg-secondary text-white d-flex justify-content-center align-items-center footer">
+        <ng-content select="[footer]"></ng-content>
+    </footer>
+</div>
