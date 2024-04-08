@@ -4,12 +4,16 @@
             <div class="card-body position-relative">
                 {{n.text}}
                 <!-- Note duration and expand icon at the top right -->
-                <div class="note-duration position-absolute top-0 end-0 p-2" style="font-size:0.8rem">
+                <div class="note-duration position-absolute top-1 end-1">
                     <i class="bi bi-arrows-angle-expand"></i> <!-- Bootstrap Icons expand icon -->
                     {{n.durationText}}
                 </div>
             </div>
         </div>
     </div>
-    <ng-container footer>Test footer</ng-container>
+    <ng-container footer>
+        <button class="btn btn-primary me-2" (click)="addNote($event)">
+            <i class="bi bi-plus-lg"></i> Add note
+        </button>
+    </ng-container>
 </v-shell>

@@ -56,6 +56,10 @@ export class NotesListComponent {
 
         return n;
     })();
+
+    addNote(evt ?: Event) {
+
+    }
 }
 
 interface NoteModel {

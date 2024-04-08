@@ -1,0 +1,14 @@
+.note-duration {
+    top: 10px;
+    right: 10px;
+    background-color: hsla(193, 20%, 63%, 0.308); /* Semi-transparent background */
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.75rem; /* Smaller font size for duration */
+    display: flex;
+    align-items: center;
+}
+
+.note-duration i {
+    margin-right: 5px; /* Space between icon and text */
+}
