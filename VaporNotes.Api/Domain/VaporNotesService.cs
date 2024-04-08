@@ -68,6 +68,9 @@ public interface IDropboxService
     Task SaveFileAsync(Stream content, DropboxFileReference file);
     Task<Stream?> LoadFileAsync(DropboxFileReference file);
     Task DeleteFilesAsync(List<DropboxFileReference> ids);
+    Uri GetBeginAuthorizationUri();
+    Task<DropboxRefreshableAccessToken> CompleteAuthorizationAsync(string code);
+    Task<DropboxRefreshableAccessToken> RefreshAuthorizationAsync(string refreshToken);
 }
 
 public interface IVaporNotesClock
@@ -77,3 +80,5 @@ public interface IVaporNotesClock
 
 public record Note(string Text, DateTimeOffset CreationDate, DateTimeOffset ExpirationDate, DropboxFileReference? AttachedDropboxFile);
 public record DropboxFileReference(string Path);
+
+public record DropboxRefreshableAccessToken(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt);

@@ -1,6 +1,6 @@
 ﻿namespace VaporNotes.Api.Support;
 
-public class BearerToken(IHttpContextAccessor httpContextAccessor)
+public class VaporNotesBearerToken(IHttpContextAccessor httpContextAccessor)
 {
     public string? AccessToken
     {
