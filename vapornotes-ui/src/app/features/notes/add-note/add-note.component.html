@@ -1,0 +1,10 @@
+<v-shell>
+    <div body class="align-self-stretch flex-grow-1 d-flex flex-column align-items-center justify-content-center">
+        <quill-editor  [(ngModel)]="editorContent" (onEditorCreated)="onQuillEditorCreated($event)"></quill-editor>
+    </div>
+    <ng-container footer>
+        <button class="btn btn-primary me-2" (click)="saveNote($event)">
+            <i class="bi bi-plus-lg"></i> Save
+        </button>
+    </ng-container>
+</v-shell>

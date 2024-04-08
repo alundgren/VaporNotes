@@ -1,12 +1,12 @@
 <v-shell>
     <div body class="align-self-stretch d-flex flex-column gap-2 h-100 py-2">
-        <div class="card" style="width: 18rem;" *ngFor="let n of notes" style="align-self: stretch">
+        <div class="card" style="width: 18rem;" *ngFor="let n of notesService.notes.value" style="align-self: stretch">
             <div class="card-body position-relative">
                 {{n.text}}
                 <!-- Note duration and expand icon at the top right -->
                 <div class="note-duration position-absolute top-1 end-1">
                     <i class="bi bi-arrows-angle-expand"></i> <!-- Bootstrap Icons expand icon -->
-                    {{n.durationText}}
+                    5 seconds
                 </div>
             </div>
         </div>

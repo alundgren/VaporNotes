@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { ShellComponent } from '../../shell/shell.component';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { NotesService } from '../notes.service';
 
 @Component({
     selector: 'v-notes-list',
@@ -10,6 +12,10 @@ import { CommonModule } from '@angular/common';
     styleUrl: './notes-list.component.scss'
 })
 export class NotesListComponent {
+    constructor(private router: Router, public notesService: NotesService) {
+
+    }
+
     notes: NoteModel[] | null = (() => {
         let  n = [
             { text: 'Test 123', durationText: '10 seconds' },
@@ -58,7 +64,7 @@ export class NotesListComponent {
     })();
 
     addNote(evt ?: Event) {
-
+        this.router.navigateByUrl('/secure/add-note')
     }
 }
 
