@@ -3,73 +3,54 @@ import { ShellComponent } from '../../shell/shell.component';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NotesService } from '../notes.service';
+import { QuillModule } from 'ngx-quill';
+import { Observable, Subscription, timer } from 'rxjs';
+import { formatDistanceToNow } from "date-fns";
 
 @Component({
     selector: 'v-notes-list',
     standalone: true,
-    imports: [CommonModule, ShellComponent],
+    imports: [CommonModule, ShellComponent, QuillModule],
     templateUrl: './notes-list.component.html',
     styleUrl: './notes-list.component.scss'
 })
 export class NotesListComponent {
-    constructor(private router: Router, public notesService: NotesService) {
+    constructor(private router: Router, notesService: NotesService) {
+        const notesSub = notesService.notes.subscribe(notes => {
+            this.notes = notes.map(note => ({
+                isExpanded: false,
+                text: note.text,
+                durationText: formatDistanceToNow(note.expirationDate)
+            }))
+        });
+        this.subs.push(notesSub);
+    }
+
+    everyMinute: Observable<number> = timer(0, 60 * 1000);
+
+    public notes: NoteViewModel[] = [];
+
+    private subs: Subscription[] = [];
+
+
+    addNote(evt?: Event) {
+        evt?.preventDefault();
+        this.router.navigateByUrl('/secure/add-note')
+    }
+
+    ngOnInit() {
 
     }
 
-    notes: NoteModel[] | null = (() => {
-        let  n = [
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-            { text: 'Test 123', durationText: '10 seconds' },
-            { text: 'Test q334f423', durationText: '5 minutes' },
-            { text: 'Test q3f23r', durationText: '19 hours' },
-        ];
-
-        for(var i=0;i < 50; i++) {
-            n[3].text += 'New line ' + '\r\n';
+    ngOnDestroy() {
+        for(let sub of this.subs) {
+            sub.unsubscribe();
         }
-
-        return n;
-    })();
-
-    addNote(evt ?: Event) {
-        this.router.navigateByUrl('/secure/add-note')
     }
 }
 
-interface NoteModel {
-    isExpanded ?: boolean
+interface NoteViewModel {
+    isExpanded?: boolean
     durationText: string
     text: string
 }
