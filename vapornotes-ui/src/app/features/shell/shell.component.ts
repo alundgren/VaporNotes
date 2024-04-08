@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 
 @Component({
-    selector: 'vapor-shell',
+    selector: 'v-shell',
     standalone: true,
     imports: [RouterModule],
     templateUrl: './shell.component.html',

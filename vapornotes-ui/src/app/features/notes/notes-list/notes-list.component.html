@@ -1,0 +1,15 @@
+<v-shell>
+    <div body class="align-self-stretch d-flex flex-column gap-2 h-100 py-2">
+        <div class="card" style="width: 18rem;" *ngFor="let n of notes" style="align-self: stretch">
+            <div class="card-body position-relative">
+                {{n.text}}
+                <!-- Note duration and expand icon at the top right -->
+                <div class="note-duration position-absolute top-0 end-0 p-2" style="font-size:0.8rem">
+                    <i class="bi bi-arrows-angle-expand"></i> <!-- Bootstrap Icons expand icon -->
+                    {{n.durationText}}
+                </div>
+            </div>
+        </div>
+    </div>
+    <ng-container footer>Test footer</ng-container>
+</v-shell>
