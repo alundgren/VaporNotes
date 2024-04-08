@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -50,11 +50,11 @@ export class AuthService {
     }
 
     getLocalLoginUrl() {
-        return inject(Router).createUrlTree(['/login']);
+        return this.router.createUrlTree(['/login']);
     }
 
     beginDropboxAuthorization() {
-        return this.httpClient.post<{ loginUrl: string }>(ApiService.getApiUrl('api/begin-authorize'), {}).pipe(map(x => x.loginUrl));
+        return this.httpClient.post<string>(ApiService.getApiUrl('api/begin-authorize'), {});
     }
 
     completeDropboxAuthorization(code: string) {
@@ -64,6 +64,13 @@ export class AuthService {
             this.authState.next(x);
             return true;
         }))
+    }
+
+    logout() {
+        sessionStorage.removeItem(SessionStorageTokenKey);
+        localStorage.removeItem(LocalStorageTokenKey);
+        this.authState.next(null);
+        return this.router.navigateByUrl(this.getLocalLoginUrl());
     }
 }
 

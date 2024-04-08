@@ -2,7 +2,9 @@
     <header class="bg-primary text-white d-flex justify-content-between align-items-center header">
         <!-- Logo on the left -->
         <div class="ms-3">
-            <img src="/assets/vapornotes-logo.png" alt="Logo" height="50">
+            <a [routerLink]="'/'">
+                <img src="/assets/vapornotes-logo.png" alt="Logo" height="50">
+            </a>
         </div>
 
         <!-- Middle content can go here or you can leave it empty -->
@@ -12,7 +14,7 @@
 
         <!-- Logout link on the right -->
         <div class="me-3">
-            <a href="logout_url" class="text-white">Logout</a>
+            <a href="#" (click)="logout($event)" class="text-white">Logout</a>
         </div>
     </header>
 
