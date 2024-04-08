@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using VaporNotes.Api.Domain;
 
 namespace VaporNotes.UnitTests;
@@ -9,7 +10,7 @@ public class ExpirationTests
     {
         var clock = new FakeVaporNotesClock();
         var dropbox = new FakeDropboxService();
-        var service = new VaporNotesService(dropbox, clock, noteDuration: TimeSpan.FromMinutes(2));
+        var service = new VaporNotesService(dropbox, clock, DurationConfig(TimeSpan.FromMinutes(2)));
 
         await service.AddNoteAsync("test");
         clock.LetTimePass(TimeSpan.FromMinutes(1));
@@ -23,7 +24,7 @@ public class ExpirationTests
     {
         var clock = new FakeVaporNotesClock();
         var dropbox = new FakeDropboxService();
-        var service = new VaporNotesService(dropbox, clock, noteDuration: TimeSpan.FromMinutes(2));
+        var service = new VaporNotesService(dropbox, clock, DurationConfig(TimeSpan.FromMinutes(2)));
 
         await service.AddNoteAsync("test");
         clock.LetTimePass(TimeSpan.FromMinutes(3));
@@ -31,4 +32,6 @@ public class ExpirationTests
 
         Assert.Empty(notes);
     }
+
+    private IConfiguration DurationConfig(TimeSpan t) => new FakeConfiguration().Set("VaporNotes:NoteDuration", t.ToString("c"));
 }

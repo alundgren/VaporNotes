@@ -1,8 +1,9 @@
 ﻿using System.Text;
+using VaporNotes.Api.Support;
 
 namespace VaporNotes.Api.Domain;
 
-public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, TimeSpan noteDuration)
+public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, IConfiguration configuration)
 {
     public async Task<List<Note>> GetNotesAsync()
     {
@@ -14,7 +15,7 @@ public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, 
     {
         var notes = await LoadNotesAsync();
         var now = clock.UtcNow;
-        notes.Add(new Note(text, now, now.Add(noteDuration), null));
+        notes.Add(new Note(text, now, now.Add(NoteDuration), null));
 
         await SaveNotesAsync(notes);
         return await VaporizeNotesAsync(notes); //TODO: Could be optimized to prevent to saves on vaporize
@@ -59,6 +60,8 @@ public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, 
             throw new Exception("Failed to parse notes");
         return parsedNotes;
     }
+
+    private TimeSpan NoteDuration => TimeSpan.ParseExact(configuration.GetRequiredSettingValue("VaporNotes:NoteDuration"), "c", null);
 
     private static DropboxFileReference NotesFileReference = new DropboxFileReference("notes_v1.json");
 }

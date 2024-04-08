@@ -1,4 +1,3 @@
-using Dropbox.Api;
 using VaporNotes.Api;
 using VaporNotes.Api.Domain;
 using VaporNotes.Api.Dropbox;
@@ -24,13 +23,11 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
 builder.Services.AddTransient<VaporNotesBearerToken>();
 builder.Services.AddSingleton<IVaporNotesClock, VaporNotesClock>();
 builder.Services.AddTransient<IDropboxService, DropboxService>();
-builder.Services.AddTransient(x => 
-    new VaporNotesService(x.GetRequiredService<IDropboxService>(), 
-    x.GetRequiredService<IVaporNotesClock>(), 
-    TimeSpan.FromMinutes(1)));
+builder.Services.AddTransient<VaporNotesService>();
 
 var app = builder.Build();
 
@@ -48,39 +45,30 @@ var appKey = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAp
 var appSecret = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAppSecret");
 var clock = new VaporNotesClock();
 app.MapPost("/api/begin-authorize", (IDropboxService dropbox) => dropbox.GetBeginAuthorizationUri());
-app.MapPost("/api/complete-authorize", async (IDropboxService dropbox, CompleteAuthorizeRequest request) => await dropbox.CompleteAuthorizationAsync(request.Code));
-app.MapPost("/api/refresh-authorize", async (RefreshAuthorizeRequest request) =>
+app.MapPost("/api/complete-authorize", async (IDropboxService dropbox, CompleteAuthorizeRequest request) =>
 {
-    var refresher = new DropboxTokenRefresher(request.RefreshToken, appKey, appSecret, new VaporNotesClock());
-    var result = await refresher.RefreshAccessToken();
+    var result = await dropbox.CompleteAuthorizationAsync(request.Code);
     return new
     {
-        ExpiresAtEpoch = result.ExpiresAtEpoch,
+        ExpiresAtEpoch = result.ExpiresAt.ToUnixTimeMilliseconds(),
+        result.AccessToken,
+        result.RefreshToken
+    };
+});
+app.MapPost("/api/refresh-authorize", async (IDropboxService dropbox, RefreshAuthorizeRequest request) =>
+{
+    var result = await dropbox.RefreshAuthorizationAsync(request.RefreshToken);
+    return new
+    {
+        ExpiresAtEpoch = result.ExpiresAt.ToUnixTimeMilliseconds(),
         result.AccessToken,
         result.RefreshToken
     };
 });
 
-VaporNotesService CreateService(DropboxAccessToken accessToken)
-{
-    var d = new DropboxService(builder.Configuration, accessToken);
-    return new VaporNotesService(d, new VaporNotesClock(), TimeSpan.FromMinutes(1));
-}
-
-app.MapPost("/api/notes/list", async (VaporNotesBearerToken token, ListNotesRequest request) =>
-{
-    var s = CreateService(new DropboxAccessToken(token.RequiredAccessToken));
-    return await s.GetNotesAsync();
-});
-app.MapPost("/api/notes/add-text", async (VaporNotesBearerToken token, AddTextNoteRequest request) =>
-{
-    var s = CreateService(new DropboxAccessToken(token.RequiredAccessToken));
-    return await s.AddNoteAsync("Test: " + DateTime.UtcNow.ToString("o"));
-});
-app.MapGet("/api/heartbeat", () =>
-{
-    return "Ok";
-});
+app.MapPost("/api/notes/list", async (VaporNotesService service, ListNotesRequest request) => await service.GetNotesAsync());
+app.MapPost("/api/notes/add-text", async (VaporNotesService service, AddTextNoteRequest request) => await service.AddNoteAsync(request.Text));
+app.MapGet("/api/heartbeat", () => "Ok");
 
 /*
 .WithName("GetWeatherForecast")

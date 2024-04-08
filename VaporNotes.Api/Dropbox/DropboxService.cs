@@ -1,12 +1,11 @@
 ﻿using Dropbox.Api;
 using Dropbox.Api.Files;
-using Newtonsoft.Json;
 using VaporNotes.Api.Domain;
 using VaporNotes.Api.Support;
 
 namespace VaporNotes.Api.Dropbox;
 
-public class DropboxService(IConfiguration configuration, IVaporNotesClock clock, VaporNotesBearerToken accessToken) : IDropboxService
+public class DropboxService(IConfiguration configuration, IVaporNotesClock clock, VaporNotesBearerToken accessToken, IHttpClientFactory httpClientFactory) : IDropboxService
 {
     public string AppKey => configuration.GetRequiredSettingValue("VaporNotes:DropboxAppKey");
     public string AppSecret => configuration.GetRequiredSettingValue("VaporNotes:DropboxAppSecret");
@@ -54,19 +53,17 @@ public class DropboxService(IConfiguration configuration, IVaporNotesClock clock
 
     private string GetApiPath(DropboxFileReference file) => $"{(file.Path.StartsWith("/") ? "" : "/")}{file.Path}";
 
-    public Task<DropboxRefreshableAccessToken> RefreshAuthorizationAsync(string refreshToken)
+    public async Task<DropboxRefreshableAccessToken> RefreshAuthorizationAsync(string refreshToken)
     {
-        using var client = new HttpClient();
-
-        todo httpclient factory
+        using var client = httpClientFactory.CreateClient();
 
         var url = "https://api.dropboxapi.com/oauth2/token";
         var data = new Dictionary<string, string>
         {
             { "grant_type", "refresh_token" },
             { "refresh_token", refreshToken },
-            { "client_id", appKey },
-            { "client_secret", appSecret }
+            { "client_id", AppKey },
+            { "client_secret", AppSecret }
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, url)
@@ -77,12 +74,15 @@ public class DropboxService(IConfiguration configuration, IVaporNotesClock clock
         var response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
-        var jsonContent = await response.Content.ReadAsStringAsync();
-        var tokenResult = JsonConvert.DeserializeObject<DropboxRefreshedToken>(jsonContent);
+        var tokenResult = await response.Content.ReadFromJsonAsync<DropboxRefreshResult>();
         if (tokenResult?.access_token == null)
             throw new Exception("Missing token in response");
-        return (tokenResult.access_token, clock.UtcNow.AddMinutes(tokenResult.expires_in).ToUnixTimeMilliseconds(), tokenResult.refresh_token ?? refreshToken);
+        return new DropboxRefreshableAccessToken(tokenResult.access_token,
+            tokenResult.refresh_token ?? refreshToken,
+            clock.UtcNow.AddMinutes(tokenResult.expires_in ?? 60));
     }
+
+    private record DropboxRefreshResult(string? access_token, int? expires_in, string? refresh_token);
 }
 
 
