@@ -1,11 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { ShellComponent } from '../../shell/shell.component';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { NotesService } from '../notes.service';
+import { NotesService, UiNote } from '../notes.service';
 import { QuillModule } from 'ngx-quill';
-import { Observable, Subscription, timer } from 'rxjs';
-import { formatDistanceToNow } from "date-fns";
+import { Subscription, firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'v-notes-list',
@@ -15,31 +14,25 @@ import { formatDistanceToNow } from "date-fns";
     styleUrl: './notes-list.component.scss'
 })
 export class NotesListComponent {
-    constructor(private router: Router, notesService: NotesService) {
-        const notesSub = notesService.notes.subscribe(notes => {
-            this.notes = notes.map(note => ({
-                isExpanded: false,
-                text: note.text,
-                durationText: formatDistanceToNow(note.expirationDate)
-            }))
-        });
-        this.subs.push(notesSub);
+    constructor(private router: Router, private notesService: NotesService) {
+
     }
 
-    everyMinute: Observable<number> = timer(0, 60 * 1000);
-
-    public notes: NoteViewModel[] = [];
+    public notes: UiNote[] = [];
 
     private subs: Subscription[] = [];
-
 
     addNote(evt?: Event) {
         evt?.preventDefault();
         this.router.navigateByUrl('/secure/add-note')
     }
 
-    ngOnInit() {
-
+    async ngOnInit() {
+        const notesSub = this.notesService.notes.subscribe(notes => {
+            this.notes = notes;
+        });
+        this.subs.push(notesSub);
+        await firstValueFrom(this.notesService.init());
     }
 
     ngOnDestroy() {
@@ -47,10 +40,4 @@ export class NotesListComponent {
             sub.unsubscribe();
         }
     }
-}
-
-interface NoteViewModel {
-    isExpanded?: boolean
-    durationText: string
-    text: string
 }

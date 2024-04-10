@@ -9,7 +9,7 @@ export const routes: Routes = [
     { path: '', redirectTo: 'secure/notes', pathMatch: 'full' },
     { path: 'ui-prototype', component: UiPrototypeComponent },
     { path: 'login', component: LoginComponent },
-    { path: 'secure', canActivate: [], children: [
+    { path: 'secure', canActivate: [AuthGuard], children: [
         { path: 'notes', component: NotesListComponent },
         { path: 'add-note', component: AddNoteComponent }
     ]}

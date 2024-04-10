@@ -27,7 +27,7 @@ export class AddNoteComponent {
         if(!this.editor) {
             throw new Error('Missing editor');
         }
-        this.notes.addNote(this.editorContent).subscribe(_ => {
+        this.notes.addNote(this.editorContent).subscribe(() => {
             this.router.navigateByUrl('/secure/notes');
         })
     }

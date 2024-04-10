@@ -15,7 +15,7 @@ public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, 
     {
         var notes = await LoadNotesAsync();
         var now = clock.UtcNow;
-        notes.Add(new Note(text, now, now.Add(NoteDuration), null));
+        notes.Add(new Note(Guid.NewGuid().ToString(), text, now, now.Add(NoteDuration), null));
 
         await SaveNotesAsync(notes);
         return await VaporizeNotesAsync(notes); //TODO: Could be optimized to prevent to saves on vaporize
@@ -81,7 +81,7 @@ public interface IVaporNotesClock
     DateTimeOffset UtcNow { get; }
 }
 
-public record Note(string Text, DateTimeOffset CreationDate, DateTimeOffset ExpirationDate, DropboxFileReference? AttachedDropboxFile);
+public record Note(string Id, string Text, DateTimeOffset CreationDate, DateTimeOffset ExpirationDate, DropboxFileReference? AttachedDropboxFile);
 public record DropboxFileReference(string Path);
 
 public record DropboxRefreshableAccessToken(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt);
