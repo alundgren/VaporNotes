@@ -2,8 +2,9 @@ import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
-import { provideHttpClient } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient } from '@angular/common/http';
 import { provideQuillConfig } from 'ngx-quill';
+import { LoadingHttpInterceptor } from './features/loading/loading.http-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [provideRouter(routes), provideHttpClient(), provideQuillConfig({
@@ -31,5 +32,10 @@ export const appConfig: ApplicationConfig = {
         ['link', 'image', 'video']                         // link and image, video
       ]
     }
-  })]
+  }),
+  {
+    provide: HTTP_INTERCEPTORS,
+    useClass: LoadingHttpInterceptor,
+    multi: true,
+  },]
 };
