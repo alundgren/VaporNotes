@@ -23,3 +23,8 @@
         <ng-content select="[footer]"></ng-content>
     </footer>
 </div>
+<div *ngIf="loading$ | async" class="d-flex justify-content-center align-items-center" style="position: fixed; top: 0; left: 0; height: 100vh; width: 100vw; background-color: rgba(0, 0, 0, 0.5);">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>

@@ -66,6 +66,11 @@ app.MapPost("/api/refresh-authorize", async (IDropboxService dropbox, RefreshAut
 app.MapPost("/api/notes/list", async (VaporNotesService service, ListNotesRequest request) => await service.GetNotesAsync());
 app.MapPost("/api/notes/add-text", async (VaporNotesService service, AddTextNoteRequest request) => await service.AddNoteAsync(request.Text));
 app.MapGet("/api/heartbeat", () => "Ok");
+app.MapGet("/api/test-delay", async () =>
+{
+    await Task.Delay(5000);
+    return "Ok";
+});
 
 /*
 .WithName("GetWeatherForecast")

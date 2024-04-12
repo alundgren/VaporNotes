@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject, Observable, map, of, timer } from "rxjs";
-import { ApiService } from "../../api.service";
+import { ApiService, debugLog } from "../../api.service";
 import { formatDistanceToNow, isBefore } from "date-fns";
 
 @Injectable({
@@ -57,6 +57,7 @@ export class NotesService {
     private handleRefresh(result: Observable<ServerNote[]>) {
         return result.pipe(map(serverNotes => {
             this.notes.next(serverNotes.map(n => new UiNote(n)));
+            debugLog('handleRefresh: done');
             return true;
         }))
     }

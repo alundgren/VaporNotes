@@ -1,3 +1,4 @@
 export const environment = {
-    apiBaseUrl: 'https://api-vapornotes.irudd.se'
+    apiBaseUrl: 'https://api-vapornotes.irudd.se',
+    isDebugLogEnabled: false
 };

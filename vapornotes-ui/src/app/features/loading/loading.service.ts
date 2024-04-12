@@ -8,9 +8,6 @@ import { BehaviorSubject, Observable } from "rxjs";
     constructor() {
         this.loadingSubject = new BehaviorSubject<boolean>(false);
         this.loading$ = this.loadingSubject.asObservable();
-        this.loadingSubject.subscribe(x => {
-            console.log("Loading: " + x);
-        })
     }
 
     private loadingSubject : BehaviorSubject<boolean>;

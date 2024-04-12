@@ -2,12 +2,19 @@ import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
-import { HTTP_INTERCEPTORS, provideHttpClient } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideQuillConfig } from 'ngx-quill';
 import { LoadingHttpInterceptor } from './features/loading/loading.http-interceptor';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideRouter(routes), provideHttpClient(), provideQuillConfig({
+  providers: [provideRouter(routes),
+    {
+        provide: HTTP_INTERCEPTORS,
+        useClass: LoadingHttpInterceptor,
+        multi: true,
+    },
+    provideHttpClient(withInterceptorsFromDi()),
+    provideQuillConfig({
     modules: {
       syntax: false,
       toolbar: [
@@ -33,9 +40,5 @@ export const appConfig: ApplicationConfig = {
       ]
     }
   }),
-  {
-    provide: HTTP_INTERCEPTORS,
-    useClass: LoadingHttpInterceptor,
-    multi: true,
-  },]
+  ]
 };

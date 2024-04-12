@@ -15,7 +15,7 @@ export class LoadingHttpInterceptor implements HttpInterceptor {
             return next.handle(req);
         }
 
-        todo make this work https://blog.angular-university.io/angular-loading-indicator/ ... intercepetor does not work
+        //todo make this work https://blog.angular-university.io/angular-loading-indicator/ ... intercepetor does not work
 
         this.loadingService.loadingOn();
 

@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { environment } from "../environments/environment";
 import { AuthService } from "./features/auth/auth.service";
-import { delay, switchMap } from "rxjs";
+import { delay, switchMap, tap } from "rxjs";
 import { Injectable } from "@angular/core";
 
 @Injectable({
@@ -19,7 +19,7 @@ export class ApiService {
                 Authorization: `Bearer ${accessToken}`,
             });
             return this.httpClient.post<TResponse>(ApiService.getApiUrl(relativeUrl), body, { headers: headers });
-        })).pipe(delay(1000));
+        }));
     }
 
     static getApiUrl(relativeUrl: string) {
@@ -33,5 +33,11 @@ export class ApiService {
             : relativeUrl;
 
         return `${baseUrl}/${trimmedRelativeUrl}`
+    }
+}
+
+export function debugLog(text: string) {
+    if(environment.isDebugLogEnabled) {
+        console.log(text);
     }
 }

@@ -6,6 +6,7 @@ import { NotesService } from '../notes.service';
 import * as Quill from 'quill'
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'v-add-note',
@@ -20,16 +21,20 @@ export class AddNoteComponent {
     }
 
     editorContent: string = '';
+    isSaving = false;
     private editor: Quill.default | null = null;
 
-    saveNote(evt ?: Event) {
+    async saveNote(evt ?: Event) {
         evt?.preventDefault();
         if(!this.editor) {
             throw new Error('Missing editor');
         }
-        this.notes.addNote(this.editorContent).subscribe(() => {
-            this.router.navigateByUrl('/secure/notes');
-        })
+
+        this.isSaving = true;
+
+        await firstValueFrom(this.notes.addNote(this.editorContent));
+
+        this.router.navigateByUrl('/secure/notes');
     }
 
     onQuillEditorCreated(quillInstance: Quill.default) {
