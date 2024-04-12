@@ -27,6 +27,11 @@ export class NotesListComponent {
         this.router.navigateByUrl('/secure/add-note')
     }
 
+    toggleExpanded(n: UiNote, evt ?: Event) {
+        evt?.preventDefault();
+        n.isExpanded = !n.isExpanded;
+    }
+
     async ngOnInit() {
         const notesSub = this.notesService.notes.subscribe(notes => {
             this.notes = notes;

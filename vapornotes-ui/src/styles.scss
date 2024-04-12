@@ -5,3 +5,11 @@
 @import 'bootstrap-icons/font/bootstrap-icons.css';
 @import 'quill/dist/quill.core.css';
 @import 'quill/dist/quill.snow.css';
+
+.compact-note {
+    max-height: 20vh;
+}
+
+.compact-note .ql-editor {
+        overflow:hidden!important;
+}

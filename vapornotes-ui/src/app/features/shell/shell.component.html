@@ -7,7 +7,7 @@
         </div>
 
         <div class="flex-grow-1 text-center">
-            Vapor notes
+            Vapor notes <button *ngIf="isTest" class="btn btn-secondary" (click)="addTestData($event)">Test data+</button>
         </div>
 
         <div class="me-3">
