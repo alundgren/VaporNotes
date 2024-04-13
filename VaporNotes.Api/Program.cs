@@ -7,11 +7,18 @@ const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
-/*
- * Used to keep dropbox keys for the LocalNetwork configuration as user secrets dont
- * seem to work with any configuration except Development even if set with -c.
- */ 
-builder.Configuration.AddJsonFile("local.appsettings.json", optional: true);
+//string? localNetworkApplicationUrl= "";
+if (builder.Configuration["VAPORNOTES_IS_LOCALNETWORK"] == "true")
+{
+    /*
+     * This is used so we can keep launchSettings.json in version-control without keeping the local machines ip adress in applicationUrl.
+     * We keep the ip in the localNetwork launch profile as see_readme_do_not_change and then override it using this file which
+     * is kept out of version control. Note that this only works in Development.
+     */
+    builder.Configuration.AddJsonFile("localNetwork.appsettings.json", optional: true);
+    //localNetworkApplicationUrl = builder.Configuration["VaporNotes:ApplicationUrl"];
+}
+
 
 builder.Services.AddEndpointsApiExplorer(); //https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddSwaggerGen();
@@ -38,7 +45,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI();        
 }
 else
 {

@@ -16,9 +16,10 @@
       "dotnetRunMessages": true,
       "launchBrowser": false,
       "launchUrl": "swagger",
-      "applicationUrl": "http://192.168.1.33:3000",
+      "applicationUrl": "see_readme_do_not_change",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "VAPORNOTES_IS_LOCALNETWORK": "true"
       }
     }
   }  
