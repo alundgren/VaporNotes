@@ -1,13 +1,15 @@
 # Vapor notes
-Run locally:
+
+## Run locally
 
 > ng serve
 
-Run exposed to local network:
+## Run exposed to local network
+
+Create a file environments/environment.localNetwork.ts that is the exact same as development expect the apiBaseUrl points to
+whatever you setup the api as. (See the api project README)
 
 > ng serve --open --host <your local ip> --disable-host-check --configuration localNetwork
-
-This will also require setting http://<your local ip>/<:port> in the api setting VaporNotes:UiBaseUrl or CORS will prevent calls.
 
 # Environment settings
 Found in the /environments.

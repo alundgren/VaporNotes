@@ -483,3 +483,4 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 /VaporNotes.Api/localNetwork.appsettings.json
+vapornotes-ui/src/environments/environment.localNetwork.ts
