@@ -60,7 +60,18 @@
                   "with": "src/environments/environment.development.ts"
                 }
               ]
-            }
+            },
+            "localNetwork": {
+                "optimization": false,
+                "extractLicenses": false,
+                "sourceMap": true,
+                "fileReplacements": [
+                  {
+                    "replace": "src/environments/environment.ts",
+                    "with": "src/environments/environment.localNetwork.ts"
+                  }
+                ]
+              }
           },
           "defaultConfiguration": "production"
         },
@@ -72,7 +83,10 @@
             },
             "development": {
               "buildTarget": "vapornotes-ui:build:development"
-            }
+            },
+            "localNetwork": {
+                "buildTarget": "vapornotes-ui:build:localNetwork"
+              }
           },
           "defaultConfiguration": "development"
         },

@@ -1,0 +1,12 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "VaporNotes": {
+    "UiBaseUrl": "http://192.168.1.33:4200/",
+    "NoteDuration": "00:15:00"
+  }
+}

@@ -4,6 +4,7 @@ import { AddNoteComponent } from '../notes/add-note/add-note.component';
 import { ApiService } from '../../api.service';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-ui-prototype',
@@ -20,4 +21,6 @@ export class UiPrototypeComponent {
     async testLoader() {
         await firstValueFrom(this.httpClient.get(ApiService.getApiUrl('api/test-delay')));
     }
+
+    baseUrl = environment.apiBaseUrl;
 }

@@ -7,6 +7,12 @@ const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
+/*
+ * Used to keep dropbox keys for the LocalNetwork configuration as user secrets dont
+ * seem to work with any configuration except Development even if set with -c.
+ */ 
+builder.Configuration.AddJsonFile("local.appsettings.json", optional: true);
+
 builder.Services.AddEndpointsApiExplorer(); //https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
@@ -34,8 +40,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
 app.UseCors(ApiCorsPolicyName);
 
 var appKey = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAppKey");
