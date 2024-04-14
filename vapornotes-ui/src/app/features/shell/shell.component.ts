@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { LoadingService } from '../loading/loading.service';
@@ -21,6 +21,9 @@ export class ShellComponent {
 
     loading$: Observable<boolean>;
     isTest = !environment.isProduction;
+
+    @Input()
+    footerJustifyClass = 'justify-content-end';
 
     logout(evt ?: Event) {
         evt?.preventDefault();

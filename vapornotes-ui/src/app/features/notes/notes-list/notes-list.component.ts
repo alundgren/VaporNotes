@@ -5,11 +5,13 @@ import { Router } from '@angular/router';
 import { NotesService, UiNote } from '../notes.service';
 import { QuillModule } from 'ngx-quill';
 import { Subscription, firstValueFrom } from 'rxjs';
+import { UploadFileButtonComponent } from '../../fileupload/upload-file-button/upload-file-button.component';
+
 
 @Component({
     selector: 'v-notes-list',
     standalone: true,
-    imports: [CommonModule, ShellComponent, QuillModule],
+    imports: [CommonModule, ShellComponent, QuillModule, UploadFileButtonComponent],
     templateUrl: './notes-list.component.html',
     styleUrl: './notes-list.component.scss'
 })

@@ -1,4 +1,4 @@
-<v-shell>
+<v-shell footerJustifyClass="justify-content-between">
     <div body class="align-self-stretch d-flex flex-column gap-2 h-100 py-2">
         <div class="card note-card" [ngClass]="{ 'overflow-hidden': !n.isExpanded, 'compact-note': !n.isExpanded }" *ngFor="let n of notes">
             <div class="card-body" [ngClass]="{ 'overflow-hidden': !n.isExpanded, 'compact-note': !n.isExpanded }"> <!-- position-relative -->
@@ -12,6 +12,7 @@
         </div>
     </div>
     <ng-container footer>
+        <v-upload-file-button></v-upload-file-button>
         <button class="btn btn-primary me-2" (click)="addNote($event)">
             <i class="bi bi-plus-lg"></i> Add note
         </button>

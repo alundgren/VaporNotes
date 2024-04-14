@@ -1,0 +1,9 @@
+<div>
+    <button class="btn btn-primary me-2" (click)="selectFile($event)">
+        <i class="bi bi-plus-lg"></i> Upload file
+    </button>
+    <form #fileInputForm name="fileinputform" style="display: none">
+        <input #fileInput type="file" id="file" name="file" style="display: none" (change)="onFileSelected($event)" />
+    </form>
+</div>
+
