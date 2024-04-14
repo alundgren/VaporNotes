@@ -1,10 +1,11 @@
 /* Set the fixed height for the header and footer */
 .header, .footer {
-    height: 60px;
+    height: 70px;
+    padding: 5px;
 }
 
 /* Make the middle content take the remaining space */
 .content {
-    height: calc(100svh - 120px); /* Adjust 120px to the sum of the header and footer height */
+    height: calc(100svh - 140px); /* Adjust 120px to the sum of the header and footer height */
     overflow-y: auto; /* Allows scrolling within the middle content area */
 }
