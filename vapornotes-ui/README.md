@@ -11,6 +11,10 @@ whatever you setup the api as. (See the api project README)
 
 > ng serve --open --host <your local ip> --disable-host-check --configuration localNetwork
 
+If on windows you can use ng-serve-localNetwork.ps1 which does the same but parses the ip from the environments file automatically:
+
+> .\ng-serve-localNetwork.ps1
+
 # Environment settings
 Found in the /environments.
 
