@@ -44,6 +44,27 @@ public class DropboxService(IConfiguration configuration, IVaporNotesClock clock
         }
     }
 
+    public async Task<bool> ExistsFileAsync(DropboxFileReference file)
+    {
+        var client = new DropboxClient(accessToken.RequiredAccessToken);
+        try
+        {
+            //TODO: Use list and make this a batch api instead
+            var metaData = await client.Files.GetMetadataAsync(new GetMetadataArg(GetApiPath(file)));
+            
+            var result = await client.Files.DownloadAsync(new DownloadArg(GetApiPath(file)));
+
+            return true;
+        }
+        catch (ApiException<DownloadError> ex)
+        {
+            if (ex.ErrorResponse.IsPath && ex.ErrorResponse.AsPath.Value.IsNotFound)
+                return false;
+            else
+                throw;
+        }
+    }
+
     public async Task SaveFileAsync(Stream content, DropboxFileReference file)
     {
         
