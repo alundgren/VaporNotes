@@ -3,10 +3,9 @@ using VaporNotes.Api.Support;
 
 namespace VaporNotes.Api.Domain;
 
-public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, IConfiguration configuration)
+public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, IConfiguration configuration, PendingUploadStore pendingUploadStore)
 {
     //TODO: Make notes local to cache per session
-
     public async Task<List<Note>> GetNotesAsync()
     {
         var notes = await LoadNotesAsync();
@@ -17,7 +16,7 @@ public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, 
     {
         var notes = await LoadNotesAsync();
         var now = clock.UtcNow;
-        notes.Add(new Note(Guid.NewGuid().ToString(), text, now, now.Add(NoteDuration), null, null));
+        notes.Add(new Note(Guid.NewGuid().ToString(), text, now, now.Add(NoteDuration), null));
 
         return await VaporizeNotesAsync(notes, alwaysSave: true);
     }
@@ -27,28 +26,22 @@ public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, 
     /// 2. Upload from the app directly to SingleUseUploadUrl
     /// 3. Call CompleteUploadAsync
     /// </summary>
-    public async Task<(List<Note> Notes, string UploadNoteId, Uri SingleUseUploadUrl)> BeginUploadAsync(string fileName)
-    {
+    public Task<string> CreateSingleUseUploadKeyAsync(UploadFileMetadata file) =>
+        Task.FromResult(pendingUploadStore.CreateUploadKey(file));    
+
+    public async Task<List<Note>> CompleteUploadAsync(string uploadKey, Stream file)
+    {        
+        var fileMetadata = pendingUploadStore.ConsumeUploadUploadKey(uploadKey);
+        if (fileMetadata == null) //TODO: Custom exception -> user friendly error
+            throw new Exception("Missing upload key");
+                   
+        var noteId = Guid.NewGuid().ToString();
+        var dropboxReference = new DropboxFileReference($"attached-file/{noteId}.dat");
+        await dropbox.SaveFileAsync(file, dropboxReference);
         var notes = await LoadNotesAsync();
         var now = clock.UtcNow;
-        var newNoteId = Guid.NewGuid().ToString();
-        notes.Add(new Note(newNoteId, fileName, now, now.Add(NoteDuration), new DropboxFileReference($"attached_{newNoteId}.dat"), true));
-
-        await VaporizeNotesAsync(notes, alwaysSave: true);
-
-        throw new NotImplementedException();
-    }
-
-    public async Task<List<Note>> CompleteUploadAsync(string uploadNoteId)
-    {
-        var notes = await LoadNotesAsync();
-        var uploadNote = notes.Single(x => x.Id == uploadNoteId);
-        //TODO: Check that the file is now on dropbox
-        //TODO: Swap from records to classes so we can modify here
-        uploadNote = uploadNote with { IsPendingUpload = false };
-        notes = notes.Select(x => x.Id == uploadNote.Id ? uploadNote : x).ToList();
-        
-        return await VaporizeNotesAsync(notes, alwaysSave: true);
+        notes.Add(new Note(noteId, fileMetadata.FileName, now, now.Add(NoteDuration), dropboxReference));
+        return await VaporizeNotesAsync(notes, alwaysSave: true);        
     }
 
     private async Task<List<Note>> VaporizeNotesAsync(List<Note> notes, bool alwaysSave = false)
@@ -107,7 +100,6 @@ public interface IDropboxService
 {
     Task SaveFileAsync(Stream content, DropboxFileReference file);
     Task<Stream?> LoadFileAsync(DropboxFileReference file);
-    Task<bool> ExistsFileAsync(DropboxFileReference file);
     Task DeleteFilesAsync(List<DropboxFileReference> ids);
     Uri GetBeginAuthorizationUri();
     Task<DropboxRefreshableAccessToken> CompleteAuthorizationAsync(string code);
@@ -119,7 +111,7 @@ public interface IVaporNotesClock
     DateTimeOffset UtcNow { get; }
 }
 
-public record Note(string Id, string Text, DateTimeOffset CreationDate, DateTimeOffset ExpirationDate, DropboxFileReference? AttachedDropboxFile, bool? IsPendingUpload);
+public record Note(string Id, string Text, DateTimeOffset CreationDate, DateTimeOffset ExpirationDate, DropboxFileReference? AttachedDropboxFile);
 public record DropboxFileReference(string Path);
 
 public record DropboxRefreshableAccessToken(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt);

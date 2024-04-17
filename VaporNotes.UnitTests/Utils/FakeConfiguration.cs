@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 
-namespace VaporNotes.UnitTests;
+namespace VaporNotes.UnitTests.Utils;
 
-internal class FakeConfiguration : IConfiguration
+public class FakeConfiguration : IConfiguration
 {
     public Dictionary<string, string?> values = new();
-    
+
     public string? this[string key] { get => values.GetValueOrDefault(key); set => values[key] = value; }
 
     public FakeConfiguration Set(string key, string value)

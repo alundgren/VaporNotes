@@ -1,16 +1,13 @@
-using Microsoft.Extensions.Configuration;
-using VaporNotes.Api.Domain;
+using VaporNotes.UnitTests.Utils;
 
 namespace VaporNotes.UnitTests;
 
-public class ExpirationTests
+public class ExpirationTests : TestBase
 {
     [Fact]
     public async Task NonExpiredNote_IsReturnedByGetNotes()
     {
-        var clock = new FakeVaporNotesClock();
-        var dropbox = new FakeDropboxService();
-        var service = new VaporNotesService(dropbox, clock, DurationConfig(TimeSpan.FromMinutes(2)));
+        var (service, clock) = CreateServices();
 
         await service.AddNoteAsync("test");
         clock.LetTimePass(TimeSpan.FromMinutes(1));
@@ -22,9 +19,7 @@ public class ExpirationTests
     [Fact]
     public async Task ExpiredNote_IsNotReturnedByGetNotes()
     {
-        var clock = new FakeVaporNotesClock();
-        var dropbox = new FakeDropboxService();
-        var service = new VaporNotesService(dropbox, clock, DurationConfig(TimeSpan.FromMinutes(2)));
+        var (service, clock) = CreateServices();
 
         await service.AddNoteAsync("test");
         clock.LetTimePass(TimeSpan.FromMinutes(3));
@@ -32,6 +27,4 @@ public class ExpirationTests
 
         Assert.Empty(notes);
     }
-
-    private IConfiguration DurationConfig(TimeSpan t) => new FakeConfiguration().Set("VaporNotes:NoteDuration", t.ToString("c"));
 }

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using VaporNotes.Api.Domain;
 
-namespace VaporNotes.UnitTests;
+namespace VaporNotes.UnitTests.Utils;
 
-internal class FakeDropboxService : IDropboxService
+public class FakeDropboxService : IDropboxService
 {
     private ConcurrentDictionary<string, byte[]> filesByPath = new ConcurrentDictionary<string, byte[]>();
 

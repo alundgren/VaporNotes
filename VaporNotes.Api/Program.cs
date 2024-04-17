@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Concurrent;
+using System.ComponentModel.DataAnnotations;
 using VaporNotes.Api;
 using VaporNotes.Api.Domain;
 using VaporNotes.Api.Dropbox;
@@ -7,7 +11,6 @@ const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
 
 var builder = WebApplication.CreateBuilder(args);
 
-//string? localNetworkApplicationUrl= "";
 if (builder.Configuration["VAPORNOTES_IS_LOCALNETWORK"] == "true")
 {
     /*
@@ -16,7 +19,6 @@ if (builder.Configuration["VAPORNOTES_IS_LOCALNETWORK"] == "true")
      * is kept out of version control. Note that this only works in Development.
      */
     builder.Configuration.AddJsonFile("localNetwork.appsettings.json", optional: true);
-    //localNetworkApplicationUrl = builder.Configuration["VaporNotes:ApplicationUrl"];
 }
 
 
@@ -39,6 +41,7 @@ builder.Services.AddTransient<VaporNotesBearerToken>();
 builder.Services.AddSingleton<IVaporNotesClock, VaporNotesClock>();
 builder.Services.AddTransient<IDropboxService, DropboxService>();
 builder.Services.AddTransient<VaporNotesService>();
+builder.Services.AddSingleton<PendingUploadStore>();
 
 var app = builder.Build();
 
@@ -87,6 +90,15 @@ app.MapGet("/api/test-delay", async () =>
     await Task.Delay(5000);
     return "Ok";
 });
+
+//TODO: Would be better if we could upload directly to dropbox.
+app.MapPost("/api/upload/begin", async (VaporNotesService service, [Required]UploadFileMetadata file) => await service.CreateSingleUseUploadKeyAsync(file));
+app.MapPost("/api/upload/{uploadKey}", async ([Required][FromForm] IFormFile file, [Required][FromRoute]string uploadKey, VaporNotesService service) =>
+{
+    using var stream = file.OpenReadStream();
+    return await service.CompleteUploadAsync(uploadKey, stream);
+});
+
 
 /*
 .WithName("GetWeatherForecast")
