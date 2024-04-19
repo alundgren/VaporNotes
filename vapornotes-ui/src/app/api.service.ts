@@ -1,7 +1,7 @@
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpClient, HttpEventType, HttpHeaders, HttpRequest, HttpResponse } from "@angular/common/http";
 import { environment } from "../environments/environment";
 import { AuthService } from "./features/auth/auth.service";
-import { delay, switchMap, tap } from "rxjs";
+import { Observable, delay, switchMap, tap } from "rxjs";
 import { Injectable } from "@angular/core";
 
 @Injectable({
@@ -22,6 +22,31 @@ export class ApiService {
         }));
     }
 
+    upload<TResponse>(relativeUrl: string, file: File, options ?: { observeProgressPercent: (progressPercent: number) => void }): Observable<TResponse> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        return new Observable<TResponse>(ob => {
+            this.authService.getAccessTokenOrRedirectToLogin().pipe(switchMap(accessToken => {
+                const headers = new HttpHeaders({
+                    Authorization: `Bearer ${accessToken}`,
+                });
+                const req = new HttpRequest('POST', ApiService.getApiUrl(relativeUrl), formData, {
+                    reportProgress: true,
+                    responseType: 'json',
+                    headers: headers
+                });
+                return this.httpClient.request<TResponse>(req);
+            })).subscribe(event => {
+                if (event instanceof HttpResponse) {
+                    ob.next((event as HttpResponse<TResponse>).body!);
+                    ob.complete();
+                } else if (event.type === HttpEventType.UploadProgress && event.total) {
+                    options?.observeProgressPercent(100 * event.loaded / event.total!)
+                }
+            });
+        })
+    }
+
     static getApiUrl(relativeUrl: string) {
         let baseUrl = environment.apiBaseUrl;
         if(baseUrl.endsWith('/')) {
@@ -40,4 +65,9 @@ export function debugLog(text: string) {
     if(environment.isDebugLogEnabled) {
         console.log(text);
     }
+}
+
+export interface UploadProgressEvent {
+    percentDone: number
+    isComplete: boolean
 }

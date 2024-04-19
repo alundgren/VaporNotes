@@ -4,6 +4,8 @@ import { ApiService } from '../../../api.service';
 import { Observable, firstValueFrom, lastValueFrom, switchMap, tap } from 'rxjs';
 import { HttpClient, HttpEvent, HttpEventType, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
 import { AuthService } from '../../auth/auth.service';
+import { Router } from '@angular/router';
+import { NotesService } from '../../notes/notes.service';
 
 @Component({
     selector: 'v-upload-file-button',
@@ -13,7 +15,9 @@ import { AuthService } from '../../auth/auth.service';
     styleUrl: './upload-file-button.component.scss'
 })
 export class UploadFileButtonComponent {
-    constructor(private authService: AuthService, private httpClient: HttpClient, private apiService: ApiService) {
+    constructor(private notesService: NotesService,
+        private router: Router
+    ) {
 
     }
 
@@ -34,33 +38,9 @@ export class UploadFileButtonComponent {
             //TODO: Show message
             return;
         }
-        const file = target.files[0];
-        const uploadKey = await firstValueFrom(this.apiService.post<string>('api/upload/begin', { fileName: file.name }));
-
-        await lastValueFrom(this.upload(uploadKey, file).pipe(tap(event => {
-            if (event.type === HttpEventType.UploadProgress) {
-                const percentDone = Math.round(100 * event.loaded / event.total!);
-                console.log(`File is ${percentDone}% uploaded.`);
-            } else if (event instanceof HttpResponse) {
-                console.log('File is completely uploaded!', event.body);
-            }
-        })));
-    }
-
-    private upload(uploadKey: string, file: File): Observable<HttpEvent<any>> {
-        const formData: FormData = new FormData();
-        formData.append('file', file);
-
-        return this.authService.getAccessTokenOrRedirectToLogin().pipe(switchMap(accessToken => {
-            const headers = new HttpHeaders({
-                Authorization: `Bearer ${accessToken}`,
-            });
-            const req = new HttpRequest('POST', ApiService.getApiUrl(`api/upload/${uploadKey}`), formData, {
-                reportProgress: true,
-                responseType: 'json',
-                headers: headers
-            });
-            return this.httpClient.request(req);
+        await firstValueFrom(this.notesService.uploadFile(target.files[0], x=> {
+            console.log(x);
         }));
+        this.router.navigateByUrl('/secure/notes');
     }
 }

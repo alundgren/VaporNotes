@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable, map, of, timer } from "rxjs";
+import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, timer } from "rxjs";
 import { ApiService, debugLog } from "../../api.service";
 import { formatDistanceToNow, isBefore } from "date-fns";
 
@@ -52,6 +52,12 @@ export class NotesService {
 
     refreshNotes() {
         return this.handleRefresh(this.api.post<ServerNote[]> ('api/notes/list', {  }));
+    }
+
+    uploadFile(file: File, observeProgressPercent: (progressPercent: number) => void)  {
+        return this.api.post<string>('api/upload/begin', { fileName: file.name }).pipe(switchMap(uploadKey => {
+            return this.handleRefresh(this.api.upload(`/api/upload/${uploadKey}`, file, { observeProgressPercent: observeProgressPercent }));
+        }));
     }
 
     private handleRefresh(result: Observable<ServerNote[]>) {
