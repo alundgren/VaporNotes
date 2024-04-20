@@ -34,6 +34,11 @@ export class NotesListComponent {
         n.isExpanded = !n.isExpanded;
     }
 
+    downloadFile(n: UiNote, evt ?: Event) {
+        evt?.preventDefault();
+
+    }
+
     async ngOnInit() {
         const notesSub = this.notesService.notes.subscribe(notes => {
             this.notes = notes;

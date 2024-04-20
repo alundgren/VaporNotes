@@ -92,12 +92,16 @@ app.MapGet("/api/test-delay", async () =>
 });
 
 //TODO: Would be better if we could upload directly to dropbox.
-app.MapPost("/api/upload/begin", async (VaporNotesService service, [Required]UploadFileMetadata file) => await service.CreateSingleUseUploadKeyAsync(file));
+app.MapPost("/api/upload/begin", async (VaporNotesService service, [Required]UploadFileMetadata file) => new
+{
+    UploadKey = await service.CreateSingleUseUploadKeyAsync(file)
+});
 app.MapPost("/api/upload/{uploadKey}", async ([Required][FromForm] IFormFile file, [Required][FromRoute]string uploadKey, VaporNotesService service) =>
 {
     using var stream = file.OpenReadStream();
     return await service.CompleteUploadAsync(uploadKey, stream);
-});
+})
+.DisableAntiforgery();
 
 
 /*

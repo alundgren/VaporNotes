@@ -55,7 +55,7 @@ export class NotesService {
     }
 
     uploadFile(file: File, observeProgressPercent: (progressPercent: number) => void)  {
-        return this.api.post<string>('api/upload/begin', { fileName: file.name }).pipe(switchMap(uploadKey => {
+        return this.api.post<{ uploadKey: string }>('api/upload/begin', { fileName: file.name }).pipe(switchMap(({uploadKey}) => {
             return this.handleRefresh(this.api.upload(`/api/upload/${uploadKey}`, file, { observeProgressPercent: observeProgressPercent }));
         }));
     }
@@ -81,9 +81,11 @@ export class UiNote {
         this.text = serverNote.text
         this.isExpanded = false;
         this.durationText = formatDistanceToNow(serverNote.expirationDate)
+        this.isFile = !!serverNote.attachedDropboxFile;
     }
 
     text: string;
     durationText: string
     isExpanded: boolean;
+    isFile: boolean;
 }

@@ -2,7 +2,11 @@
     <div body class="align-self-stretch d-flex flex-column gap-2 h-100 py-2">
         <div class="card note-card" [ngClass]="{ 'overflow-hidden': !n.isExpanded, 'compact-note': !n.isExpanded }" *ngFor="let n of notes">
             <div class="card-body" [ngClass]="{ 'overflow-hidden': !n.isExpanded, 'compact-note': !n.isExpanded }"> <!-- position-relative -->
-                <quill-view [content]="n.text"></quill-view>
+                <quill-view *ngIf="!n.isFile" [content]="n.text"></quill-view>
+                <div *ngIf="n.isFile">
+                    <!-- TODO: Previews -->
+                    <a href="#" (click)="downloadFile(n, $event)">{{n.text}}</a>
+                </div>
                 <!-- Note duration and expand icon at the top right -->
                 <div class="note-duration position-absolute top-1 end-1" role="button" (click)="toggleExpanded(n, $event)">
                     <i class="bi bi-arrows-angle-expand"></i> <!-- Bootstrap Icons expand icon -->
