@@ -6,6 +6,7 @@ import { NotesService, UiNote } from '../notes.service';
 import { QuillModule } from 'ngx-quill';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { UploadFileButtonComponent } from '../../fileupload/upload-file-button/upload-file-button.component';
+import { debugLog } from '../../../api.service';
 
 
 @Component({
@@ -34,9 +35,11 @@ export class NotesListComponent {
         n.isExpanded = !n.isExpanded;
     }
 
-    downloadFile(n: UiNote, evt ?: Event) {
+    async downloadFile(n: UiNote, linkElement: HTMLAnchorElement, evt ?: Event) {
         evt?.preventDefault();
-
+        const url = await firstValueFrom(this.notesService.getTemporaryDownloadUrl(n));
+        debugLog(url);
+        linkElement.href = url;
     }
 
     async ngOnInit() {

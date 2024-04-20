@@ -5,7 +5,7 @@
                 <quill-view *ngIf="!n.isFile" [content]="n.text"></quill-view>
                 <div *ngIf="n.isFile">
                     <!-- TODO: Previews -->
-                    <a href="#" (click)="downloadFile(n, $event)">{{n.text}}</a>
+                    <a href="#" #fileLink (click)="downloadFile(n, fileLink, $event)">{{n.text}}</a>
                 </div>
                 <!-- Note duration and expand icon at the top right -->
                 <div class="note-duration position-absolute top-1 end-1" role="button" (click)="toggleExpanded(n, $event)">

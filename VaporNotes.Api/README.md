@@ -1,4 +1,7 @@
 ﻿## Dropbox api keys
+To edit the app go here:
+https://www.dropbox.com/developers/apps
+
 Add app key/client id and app secret/client secret:
 > dotnet user-secrets set "VaporNotes:DropboxAppKey" "<...>"
 > dotnet user-secrets set "VaporNotes:DropboxAppSecret" "<...>"

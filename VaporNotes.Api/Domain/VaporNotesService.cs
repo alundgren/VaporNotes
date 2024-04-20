@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using VaporNotes.Api.Support;
 
 namespace VaporNotes.Api.Domain;
@@ -42,6 +43,15 @@ public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, 
         var now = clock.UtcNow;
         notes.Add(new Note(noteId, fileMetadata.FileName, now, now.Add(NoteDuration), dropboxReference));
         return await VaporizeNotesAsync(notes, alwaysSave: true);        
+    }
+
+    public async Task<(Uri Url, DateTimeOffset ExpirationDate)?> GetTemporaryPublicDownloadUrl(string noteId)
+    {
+        var notes = await LoadNotesAsync();
+        var file = notes.SingleOrDefault(x => x.Id == noteId)?.AttachedDropboxFile;
+        if (file == null)
+            return null;
+        return await dropbox.CreatePublicDownloadLink(file, TimeSpan.FromMinutes(15));
     }
 
     private async Task<List<Note>> VaporizeNotesAsync(List<Note> notes, bool alwaysSave = false)
@@ -104,6 +114,7 @@ public interface IDropboxService
     Uri GetBeginAuthorizationUri();
     Task<DropboxRefreshableAccessToken> CompleteAuthorizationAsync(string code);
     Task<DropboxRefreshableAccessToken> RefreshAuthorizationAsync(string refreshToken);
+    Task<(Uri Url, DateTimeOffset ExpirationDate)> CreatePublicDownloadLink(DropboxFileReference file, TimeSpan duration);
 }
 
 public interface IVaporNotesClock
@@ -113,5 +124,4 @@ public interface IVaporNotesClock
 
 public record Note(string Id, string Text, DateTimeOffset CreationDate, DateTimeOffset ExpirationDate, DropboxFileReference? AttachedDropboxFile);
 public record DropboxFileReference(string Path);
-
 public record DropboxRefreshableAccessToken(string AccessToken, string RefreshToken, DateTimeOffset ExpiresAt);

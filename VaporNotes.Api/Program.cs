@@ -103,6 +103,15 @@ app.MapPost("/api/upload/{uploadKey}", async ([Required][FromForm] IFormFile fil
 })
 .DisableAntiforgery();
 
+app.MapGet("/api/download/temporary-link/{noteId}", async ([Required][FromRoute] string noteId, VaporNotesService service) =>
+{
+    var result = await service.GetTemporaryPublicDownloadUrl(noteId);
+    return result != null ? new
+    {
+        Url = result.Value.Url,
+        ExpirationDate = result.Value.ExpirationDate
+    } : null;
+});
 
 /*
 .WithName("GetWeatherForecast")

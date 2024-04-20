@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, timer } from "rxjs";
+import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, timer } from "rxjs";
 import { ApiService, debugLog } from "../../api.service";
-import { formatDistanceToNow, isBefore } from "date-fns";
+import { formatDistanceToNow, isAfter, isBefore } from "date-fns";
 
 @Injectable({
     providedIn: 'root'
@@ -34,6 +34,8 @@ export class NotesService {
     private isInitRequired = true;
     private everyMinute: Observable<number>;
 
+
+    downloadLinks: { [id: string] : { url: string, expirationDate: Date } } = {};
     notes: BehaviorSubject<UiNote[]> = new BehaviorSubject<UiNote[]>([]);
 
     init() {
@@ -58,6 +60,23 @@ export class NotesService {
         return this.api.post<{ uploadKey: string }>('api/upload/begin', { fileName: file.name }).pipe(switchMap(({uploadKey}) => {
             return this.handleRefresh(this.api.upload(`/api/upload/${uploadKey}`, file, { observeProgressPercent: observeProgressPercent }));
         }));
+    }
+
+    getTemporaryDownloadUrl(note: UiNote) {
+        return new Observable<string>(ob => {
+            const noteId = note.serverNote.id;
+            const cached = this.downloadLinks[noteId];
+            if(cached && isAfter(cached.expirationDate, new Date())) {
+                ob.next(cached.url);
+                ob.complete();
+            } else {
+                this.api.get<{ url: string, expirationDate: Date }>(`api/download/temporary-link/${noteId}`).subscribe(x => {
+                    this.downloadLinks[note.serverNote.id] = x;
+                    ob.next(x.url);
+                    ob.complete();
+                });
+            }
+        })
     }
 
     private handleRefresh(result: Observable<ServerNote[]>) {

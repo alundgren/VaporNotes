@@ -22,6 +22,16 @@ export class ApiService {
         }));
     }
 
+    get<TResponse>(relativeUrl: string) {
+        return this.authService.getAccessTokenOrRedirectToLogin().pipe(switchMap(accessToken => {
+            const headers = new HttpHeaders({
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+            });
+            return this.httpClient.get<TResponse>(ApiService.getApiUrl(relativeUrl), { headers: headers });
+        }));
+    }
+
     upload<TResponse>(relativeUrl: string, file: File, options ?: { observeProgressPercent: (progressPercent: number) => void }): Observable<TResponse> {
         const formData: FormData = new FormData();
         formData.append('file', file);

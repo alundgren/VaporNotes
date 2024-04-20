@@ -1,7 +1,9 @@
 ﻿using Dropbox.Api;
 using Dropbox.Api.Files;
+using Dropbox.Api.Sharing;
 using VaporNotes.Api.Domain;
 using VaporNotes.Api.Support;
+using static Dropbox.Api.Sharing.ListFileMembersIndividualResult;
 
 namespace VaporNotes.Api.Dropbox;
 
@@ -66,10 +68,35 @@ public class DropboxService(IConfiguration configuration, IVaporNotesClock clock
     }
 
     public async Task SaveFileAsync(Stream content, DropboxFileReference file)
-    {
-        
+    {        
         var client = new DropboxClient(accessToken.RequiredAccessToken);
         await client.Files.UploadAsync(new UploadArg(GetApiPath(file), mode: WriteMode.Overwrite.Instance), content);
+    }
+
+    public async Task<(Uri Url, DateTimeOffset ExpirationDate)> CreatePublicDownloadLink(DropboxFileReference file, TimeSpan duration)
+    {
+        var client = new DropboxClient(accessToken.RequiredAccessToken);
+        var expires = clock.UtcNow.Add(duration);
+        try
+        {
+            var result = await client.Sharing.CreateSharedLinkWithSettingsAsync(new CreateSharedLinkWithSettingsArg(GetApiPath(file), new SharedLinkSettings(
+                allowDownload: true,
+                //expires: expires.DateTime,
+                requirePassword: false,
+                audience: LinkAudience.Public.Instance,
+                access: RequestedLinkAccessLevel.Viewer.Instance,
+                requestedVisibility: RequestedVisibility.Public.Instance,
+                linkPassword: null)));
+            return (new Uri(result.Url), expires);
+        }
+        catch(ApiException<CreateSharedLinkWithSettingsError> ex)
+        {
+            if (!ex.ErrorResponse.IsSharedLinkAlreadyExists)
+                throw;
+        }
+
+        var existing = await client.Sharing.ListSharedLinksAsync(GetApiPath(file), directOnly: true);
+        return (new Uri(existing.Links.Single().Url), expires);
     }
 
     private string GetApiPath(DropboxFileReference file) => $"{(file.Path.StartsWith("/") ? "" : "/")}{file.Path}";
