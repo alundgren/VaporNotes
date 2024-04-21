@@ -33,6 +33,7 @@ builder.Services.AddCors(options =>
             policy.WithOrigins(uiBaseUrl.ToString(), uiBaseUrl.ToString().TrimEnd('/'));
             policy.AllowAnyHeader();
             policy.AllowAnyMethod();
+            policy.WithExposedHeaders("Content-Disposition"); //File download does not work properly otherwise
         });
 });
 builder.Services.AddHttpContextAccessor();
@@ -103,14 +104,14 @@ app.MapPost("/api/upload/{uploadKey}", async ([Required][FromForm] IFormFile fil
 })
 .DisableAntiforgery();
 
-app.MapGet("/api/download/temporary-link/{noteId}", async ([Required][FromRoute] string noteId, VaporNotesService service) =>
+app.MapGet("/api/download/attached-file/{noteId}", async ([Required][FromRoute] string noteId, VaporNotesService service) =>
 {
-    var result = await service.GetTemporaryPublicDownloadUrl(noteId);
-    return result != null ? new
-    {
-        Url = result.Value.Url,
-        ExpirationDate = result.Value.ExpirationDate
-    } : null;
+    var result = await service.DownloadAttachedFile(noteId);
+    if (!result.HasValue)
+        return Results.NotFound();
+
+    //TODO: contentType
+    return Results.File(result.Value.Data, fileDownloadName: result.Value.Filename);
 });
 
 /*

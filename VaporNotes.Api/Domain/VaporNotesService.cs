@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using VaporNotes.Api.Support;
 
 namespace VaporNotes.Api.Domain;
@@ -45,13 +44,17 @@ public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, 
         return await VaporizeNotesAsync(notes, alwaysSave: true);        
     }
 
-    public async Task<(Uri Url, DateTimeOffset ExpirationDate)?> GetTemporaryPublicDownloadUrl(string noteId)
+    public async Task<(Stream Data, string Filename)?> DownloadAttachedFile(string noteId)
     {
         var notes = await LoadNotesAsync();
-        var file = notes.SingleOrDefault(x => x.Id == noteId)?.AttachedDropboxFile;
-        if (file == null)
+        var note = notes.SingleOrDefault(x => x.Id == noteId);
+        var file = note?.AttachedDropboxFile;
+        if (note == null || file == null)
             return null;
-        return await dropbox.CreatePublicDownloadLink(file, TimeSpan.FromMinutes(15));
+        var fileStream = await dropbox.LoadFileAsync(file);
+        if(fileStream == null)
+            return null;
+        return (fileStream, note.Text);
     }
 
     private async Task<List<Note>> VaporizeNotesAsync(List<Note> notes, bool alwaysSave = false)
@@ -67,7 +70,6 @@ public class VaporNotesService(IDropboxService dropbox, IVaporNotesClock clock, 
             }
             return notes;
         }
-            
 
         List<DropboxFileReference> attachedFilesToDelete = notesToVaporize
             .Where(x => x.AttachedDropboxFile != null)
@@ -114,7 +116,6 @@ public interface IDropboxService
     Uri GetBeginAuthorizationUri();
     Task<DropboxRefreshableAccessToken> CompleteAuthorizationAsync(string code);
     Task<DropboxRefreshableAccessToken> RefreshAuthorizationAsync(string refreshToken);
-    Task<(Uri Url, DateTimeOffset ExpirationDate)> CreatePublicDownloadLink(DropboxFileReference file, TimeSpan duration);
 }
 
 public interface IVaporNotesClock

@@ -22,17 +22,53 @@ export class ApiService {
         }));
     }
 
-    get<TResponse>(relativeUrl: string) {
+    download(relativeUrl: string) {
+        const getFileNameFromContentDisposition = (disposition: string | null): string | null => {
+            if (!disposition) {
+                return null;
+            }
+
+            const utf8FilenameRegex = /filename\*=UTF-8''([\w%\-\.]+)(?:; ?|$)/i;
+            const asciiFilenameRegex = /^filename=(["']?)(.*?[^\\])\1(?:; ?|$)/i;
+
+            let fileName: string | null = null;
+            if (utf8FilenameRegex.test(disposition)) {
+                fileName = decodeURIComponent(utf8FilenameRegex.exec(disposition)![1]);
+            } else {
+                const filenameStart = disposition.toLowerCase().indexOf('filename=');
+                if (filenameStart >= 0) {
+                    const partialDisposition = disposition.slice(filenameStart);
+                    const matches = asciiFilenameRegex.exec(partialDisposition);
+                    if (matches != null && matches[2]) {
+                        fileName = matches[2];
+                    }
+                }
+            }
+            return fileName;
+        }
+
         return this.authService.getAccessTokenOrRedirectToLogin().pipe(switchMap(accessToken => {
             const headers = new HttpHeaders({
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${accessToken}`,
             });
-            return this.httpClient.get<TResponse>(ApiService.getApiUrl(relativeUrl), { headers: headers });
+            return new Observable<{ fileData: Blob, fileName: string } | null>(ob => {
+                this.httpClient
+                    .get(ApiService.getApiUrl(relativeUrl), { headers: headers, responseType: 'blob', observe: 'response' })
+                    .subscribe(x => {
+                        const fileName = getFileNameFromContentDisposition(x.headers.get('Content-Disposition'));
+                        if(x.body && fileName) {
+                            ob.next({ fileData: x.body, fileName: fileName });
+                        } else {
+                            ob.next(null);
+                        }
+                        ob.complete();
+                    });
+            });
         }));
     }
 
-    upload<TResponse>(relativeUrl: string, file: File, options ?: { observeProgressPercent: (progressPercent: number) => void }): Observable<TResponse> {
+    upload<TResponse>(relativeUrl: string, file: File, options?: { observeProgressPercent: (progressPercent: number) => void }): Observable<TResponse> {
         const formData: FormData = new FormData();
         formData.append('file', file);
         return new Observable<TResponse>(ob => {
@@ -59,7 +95,7 @@ export class ApiService {
 
     static getApiUrl(relativeUrl: string) {
         let baseUrl = environment.apiBaseUrl;
-        if(baseUrl.endsWith('/')) {
+        if (baseUrl.endsWith('/')) {
             baseUrl = baseUrl.substring(0, baseUrl.length - 1);
         }
 
@@ -72,7 +108,7 @@ export class ApiService {
 }
 
 export function debugLog(text: string) {
-    if(environment.isDebugLogEnabled) {
+    if (environment.isDebugLogEnabled) {
         console.log(text);
     }
 }

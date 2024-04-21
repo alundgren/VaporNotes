@@ -37,9 +37,12 @@ export class NotesListComponent {
 
     async downloadFile(n: UiNote, linkElement: HTMLAnchorElement, evt ?: Event) {
         evt?.preventDefault();
-        const url = await firstValueFrom(this.notesService.getTemporaryDownloadUrl(n));
+        const {url, fileName} = await firstValueFrom(this.notesService.downloadFile(n));
         debugLog(url);
+
         linkElement.href = url;
+        linkElement.download = fileName;
+        linkElement.click();
     }
 
     async ngOnInit() {

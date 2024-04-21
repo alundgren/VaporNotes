@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject, Observable, firstValueFrom, map, of, switchMap, tap, timer } from "rxjs";
 import { ApiService, debugLog } from "../../api.service";
-import { formatDistanceToNow, isAfter, isBefore } from "date-fns";
+import { addMinutes, formatDistanceToNow, isAfter, isBefore } from "date-fns";
 
 @Injectable({
     providedIn: 'root'
@@ -35,7 +35,7 @@ export class NotesService {
     private everyMinute: Observable<number>;
 
 
-    downloadLinks: { [id: string] : { url: string, expirationDate: Date } } = {};
+    downloadLinks: { [id: string] : { url: string, fileName: string, expirationDate: Date } } = {};
     notes: BehaviorSubject<UiNote[]> = new BehaviorSubject<UiNote[]>([]);
 
     init() {
@@ -62,17 +62,23 @@ export class NotesService {
         }));
     }
 
-    getTemporaryDownloadUrl(note: UiNote) {
-        return new Observable<string>(ob => {
+    downloadFile(note: UiNote) {
+        return new Observable<{ url: string, fileName: string }>(ob => {
             const noteId = note.serverNote.id;
             const cached = this.downloadLinks[noteId];
             if(cached && isAfter(cached.expirationDate, new Date())) {
-                ob.next(cached.url);
+                ob.next({ url: cached.url, fileName: cached.fileName });
                 ob.complete();
             } else {
-                this.api.get<{ url: string, expirationDate: Date }>(`api/download/temporary-link/${noteId}`).subscribe(x => {
-                    this.downloadLinks[note.serverNote.id] = x;
-                    ob.next(x.url);
+                this.api.download(`api/download/attached-file/${noteId}`).subscribe(x => {
+                    const f = {
+                      url:window.URL.createObjectURL(x!.fileData),
+                      fileName: x!.fileName,
+                      expirationDate: addMinutes(new Date(), 30)
+                    };
+                    this.downloadLinks[note.serverNote.id] = f;
+
+                    ob.next({ url: f.url, fileName: f.fileName });
                     ob.complete();
                 });
             }
