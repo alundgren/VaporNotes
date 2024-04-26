@@ -33,3 +33,28 @@ Create a local file localNetwork.appsettings.json. Example:
 Then run the app as:
 
 > dotnet run -lp localNetwork
+
+# Docker
+Build
+> docker build -t irudd/vapornotes-api-image:latest  .
+
+Run
+> docker run -d -p 8081:80 --rm --name vapornotes-api irudd/vapornotes-api-image:latest
+
+Where 8081 is whatever the local port is.
+TODO: Add --env-file <...> here so we can keep prod credentials on the prod server. These are just <name>=<value> one per line.
+
+Attach to running
+> docker attach vapornotes-api
+
+Remove the container
+> docker rm -f vapornotes-api
+
+Get a container shell
+> docker exec -it vapornotes-api bash
+
+Get a container shell when container insta exists
+> docker run -it --entrypoint='' irudd/vapornotes-api-image:latest bash
+
+Remove all containers
+> docker rm -v -f $(docker ps -qa)

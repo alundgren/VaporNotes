@@ -38,4 +38,4 @@ Remove the container
 > docker rm -f vapornotes-ui
 
 Get a container shell
-> docker exec -it vapornotes-ui bash
+> docker exec - vapornotes-ui bash
