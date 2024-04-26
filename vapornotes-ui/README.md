@@ -21,3 +21,21 @@ Found in the /environments.
 - apiBaseUrl: Location of the backend api
 - isDebugLogEnabled: console logging of various things
 - isProduction: true/false. When false some extra test functions are exposed.
+
+# Docker
+Build
+> docker build -t irudd/vapornotes-ui-image:latest  .
+
+Run
+> docker run -d -p 8080:80 --rm --name vapornotes-ui irudd/vapornotes-ui-image:latest
+
+Where 8080 is whatever the local port is.
+
+Attach to running
+> docker attach vapornotes-ui
+
+Remove the container
+> docker rm -f vapornotes-ui
+
+Get a container shell
+> docker exec -it vapornotes-ui bash
