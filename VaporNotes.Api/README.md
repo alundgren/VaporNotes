@@ -45,7 +45,7 @@ Build
 > docker build -t irudd/vapornotes-api-image:latest  .
 
 Run
-> docker run -d -p 8084:80 --rm --env-file prod.env --name vapornotes-api irudd/vapornotes-api-image:latest
+> docker run -d -p 8084:8080 --rm --env-file prod.env --name vapornotes-api irudd/vapornotes-api-image:latest
 
 Where 8084 is whatever the local port is.
 TODO: Add --env-file <...> here so we can keep prod credentials on the prod server. These are just <name>=<value> one per line.
