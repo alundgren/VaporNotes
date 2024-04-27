@@ -27,9 +27,9 @@ Build
 > docker build -t irudd/vapornotes-ui-image:latest  .
 
 Run
-> docker run -d -p 8080:80 --rm --name vapornotes-ui irudd/vapornotes-ui-image:latest
+> docker run -d -p 8083:80 --rm --name vapornotes-ui irudd/vapornotes-ui-image:latest
 
-Where 8080 is whatever the local port is.
+Where 8083 is whatever the local port is.
 
 Attach to running
 > docker attach vapornotes-ui
