@@ -1,4 +1,10 @@
-﻿## Dropbox api keys
+﻿## Settings summary
+- VaporNotes:DropboxAppKey
+- VaporNotes:DropboxAppSecret
+- VaporNotes:UiBaseUrl
+
+
+## Dropbox api keys
 To edit the app go here:
 https://www.dropbox.com/developers/apps
 
@@ -39,9 +45,9 @@ Build
 > docker build -t irudd/vapornotes-api-image:latest  .
 
 Run
-> docker run -d -p 8081:80 --rm --name vapornotes-api irudd/vapornotes-api-image:latest
+> docker run -d -p 8084:80 --rm --env-file prod.env --name vapornotes-api irudd/vapornotes-api-image:latest
 
-Where 8081 is whatever the local port is.
+Where 8084 is whatever the local port is.
 TODO: Add --env-file <...> here so we can keep prod credentials on the prod server. These are just <name>=<value> one per line.
 
 Attach to running

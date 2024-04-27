@@ -484,3 +484,4 @@ $RECYCLE.BIN/
 *.swp
 VaporNotes.Api/localNetwork.appsettings.json
 vapornotes-ui/src/environments/environment.localNetwork.ts
+/VaporNotes.Api/prod.env
