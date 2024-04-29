@@ -1,6 +1,7 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using Dapper;
+using Microsoft.Data.Sqlite;
 
-namespace VaporNotes.UnitTests.Database;
+namespace VaporNotes.Api.Database;
 
 /// <summary>
 /// Sqlite in memory databases can be shared across connections as long as one connection remains open.
@@ -11,11 +12,12 @@ public class InMemoryDatabaseConnectionFactory : IDatabaseConnectionFactory, IDi
     private SqliteConnection keepAliveConnection;
     private const string ConnectionString = "Data Source=InMemorySample;Mode=Memory;Cache=Shared";
 
-    public InMemoryDatabaseConnectionFactory()
+    public InMemoryDatabaseConnectionFactory(ILogger? logger)
     {
-        
+        logger?.LogInformation("Using in memory database");
         keepAliveConnection = new SqliteConnection(ConnectionString);
         keepAliveConnection.Open();
+        CreateTables(keepAliveConnection);
     }
 
     public SqliteConnection CreateConnection()
@@ -29,5 +31,10 @@ public class InMemoryDatabaseConnectionFactory : IDatabaseConnectionFactory, IDi
     {
         keepAliveConnection.Close();
         keepAliveConnection.Dispose();
+    }
+
+    private static void CreateTables(SqliteConnection conn)
+    {
+        conn.Execute("CREATE TABLE File(Id TEXT NOT NULL PRIMARY KEY, ContentType TEXT NOT NULL, FileName TEXT NOT NULL, FileData BLOB)");
     }
 }

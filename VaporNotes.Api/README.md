@@ -1,6 +1,6 @@
 ﻿## Settings summary
-- VaporNotes:DropboxAppKey
-- VaporNotes:DropboxAppSecret
+- VaporNotes:DropboxAppKey (to be removed)
+- VaporNotes:DropboxAppSecret (to be removed)
 - VaporNotes:UiBaseUrl
 
 

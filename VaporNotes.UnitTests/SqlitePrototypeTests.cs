@@ -1,11 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Data.Sqlite;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VaporNotes.UnitTests.Database;
+using VaporNotes.Api.Database;
 
 namespace VaporNotes.UnitTests;
 
@@ -15,7 +10,7 @@ public class SqlitePrototypeTests : IDisposable
 
     public SqlitePrototypeTests()
     {
-        connectionFactory = new InMemoryDatabaseConnectionFactory();
+        connectionFactory = new InMemoryDatabaseConnectionFactory(null);
     }
 
     public void Dispose()

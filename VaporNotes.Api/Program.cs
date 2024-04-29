@@ -1,8 +1,7 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using VaporNotes.Api;
+using VaporNotes.Api.Database;
 using VaporNotes.Api.Domain;
 using VaporNotes.Api.Dropbox;
 using VaporNotes.Api.Support;
@@ -43,6 +42,7 @@ builder.Services.AddSingleton<IVaporNotesClock, VaporNotesClock>();
 builder.Services.AddTransient<IDropboxService, DropboxService>();
 builder.Services.AddTransient<VaporNotesService>();
 builder.Services.AddSingleton<PendingUploadStore>();
+builder.Services.AddSingleton<InMemoryDatabaseConnectionFactory>();
 
 var app = builder.Build();
 

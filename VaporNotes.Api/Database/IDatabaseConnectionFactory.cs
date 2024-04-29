@@ -1,6 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 
-namespace VaporNotes.UnitTests.Database;
+namespace VaporNotes.Api.Database;
 
 public interface IDatabaseConnectionFactory
 {
