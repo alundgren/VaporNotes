@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 using VaporNotes.Api;
 using VaporNotes.Api.Database;
 using VaporNotes.Api.Domain;
-using VaporNotes.Api.Dropbox;
 using VaporNotes.Api.Support;
 
 const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
@@ -35,11 +34,12 @@ builder.Services.AddCors(options =>
             policy.WithExposedHeaders("Content-Disposition"); //File download does not work properly otherwise
         });
 });
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<VaporNotesBearerToken>();
 builder.Services.AddSingleton<IVaporNotesClock, VaporNotesClock>();
-builder.Services.AddTransient<IDropboxService, DropboxService>();
 builder.Services.AddTransient<VaporNotesService>();
 builder.Services.AddSingleton<PendingUploadStore>();
 builder.Services.AddSingleton<InMemoryDatabaseConnectionFactory>();
@@ -58,31 +58,7 @@ else
 
 app.UseCors(ApiCorsPolicyName);
 
-var appKey = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAppKey");
-var appSecret = builder.Configuration.GetRequiredSettingValue("VaporNotes:DropboxAppSecret");
 var clock = new VaporNotesClock();
-app.MapPost("/api/begin-authorize", (IDropboxService dropbox) => dropbox.GetBeginAuthorizationUri());
-app.MapPost("/api/complete-authorize", async (IDropboxService dropbox, CompleteAuthorizeRequest request) =>
-{
-    var result = await dropbox.CompleteAuthorizationAsync(request.Code);
-    return new
-    {
-        ExpiresAtEpoch = result.ExpiresAt.ToUnixTimeMilliseconds(),
-        result.AccessToken,
-        result.RefreshToken
-    };
-});
-app.MapPost("/api/refresh-authorize", async (IDropboxService dropbox, RefreshAuthorizeRequest request) =>
-{
-    var result = await dropbox.RefreshAuthorizationAsync(request.RefreshToken);
-    return new
-    {
-        ExpiresAtEpoch = result.ExpiresAt.ToUnixTimeMilliseconds(),
-        result.AccessToken,
-        result.RefreshToken
-    };
-});
-
 app.MapPost("/api/notes/list", async (VaporNotesService service, ListNotesRequest request) => await service.GetNotesAsync());
 app.MapPost("/api/notes/add-text", async (VaporNotesService service, AddTextNoteRequest request) => await service.AddNoteAsync(request.Text));
 app.MapGet("/api/heartbeat", () => "Ok");
@@ -114,8 +90,4 @@ app.MapGet("/api/download/attached-file/{noteId}", async ([Required][FromRoute] 
     return Results.File(result.Value.Data, fileDownloadName: result.Value.Filename);
 });
 
-/*
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-*/
 app.Run();

@@ -9,12 +9,15 @@ namespace VaporNotes.Api.Database;
 /// </summary>
 public class InMemoryDatabaseConnectionFactory : IDatabaseConnectionFactory, IDisposable
 {
+    private string ConnectionString => $"Data Source={dbName};Mode=Memory;Cache=Shared";
+    private string dbName;
     private SqliteConnection keepAliveConnection;
-    private const string ConnectionString = "Data Source=InMemorySample;Mode=Memory;Cache=Shared";
+   
 
     public InMemoryDatabaseConnectionFactory(ILogger? logger)
     {
         logger?.LogInformation("Using in memory database");
+        dbName = Guid.NewGuid().ToString();
         keepAliveConnection = new SqliteConnection(ConnectionString);
         keepAliveConnection.Open();
         CreateTables(keepAliveConnection);
@@ -29,7 +32,6 @@ public class InMemoryDatabaseConnectionFactory : IDatabaseConnectionFactory, IDi
 
     public void Dispose()
     {
-        keepAliveConnection.Close();
         keepAliveConnection.Dispose();
     }
 

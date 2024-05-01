@@ -1,4 +1,5 @@
 using System.Text;
+using VaporNotes.Api.Database;
 using VaporNotes.Api.Domain;
 using VaporNotes.UnitTests.Utils;
 
@@ -10,25 +11,25 @@ public class FileUploadTests : TestBase
     public async Task Upload_WithValidKey_Works()
     {
         var clock = new FakeVaporNotesClock();
-        var dropbox = new FakeDropboxService();
+        var db = new InMemoryDatabaseConnectionFactory(null);
         var store = new PendingUploadStore();
-        var service = new VaporNotesService(dropbox, clock, DurationConfig(TimeSpan.FromMinutes(2)), store);
+        var service = new VaporNotesService(clock, DurationConfig(TimeSpan.FromMinutes(2)), store, db);
 
         var uploadKey = await service.CreateSingleUseUploadKeyAsync(new UploadFileMetadata("test.txt"));
 
         await service.CompleteUploadAsync(uploadKey, new MemoryStream(Encoding.UTF8.GetBytes("ABC")));
 
         var notes = await service.GetNotesAsync();
-        Assert.NotNull(notes?.FirstOrDefault()?.AttachedDropboxFile);
+        Assert.NotNull(notes?.FirstOrDefault()?.AttachedFileId);
     }
 
     [Fact]
     public async Task Upload_WithAlreadyUsedKey_Throws()
     {
         var clock = new FakeVaporNotesClock();
-        var dropbox = new FakeDropboxService();
+        var db = new InMemoryDatabaseConnectionFactory(null);
         var store = new PendingUploadStore();
-        var service = new VaporNotesService(dropbox, clock, DurationConfig(TimeSpan.FromMinutes(2)), store);
+        var service = new VaporNotesService(clock, DurationConfig(TimeSpan.FromMinutes(2)), store, db);
 
         var uploadKey = await service.CreateSingleUseUploadKeyAsync(new UploadFileMetadata("test.txt"));
 
@@ -43,9 +44,9 @@ public class FileUploadTests : TestBase
     public async Task Upload_Text_IsFilename()
     {
         var clock = new FakeVaporNotesClock();
-        var dropbox = new FakeDropboxService();
+        var db = new InMemoryDatabaseConnectionFactory(null);
         var store = new PendingUploadStore();
-        var service = new VaporNotesService(dropbox, clock, DurationConfig(TimeSpan.FromMinutes(2)), store);
+        var service = new VaporNotesService(clock, DurationConfig(TimeSpan.FromMinutes(2)), store, db);
 
         var uploadKey = await service.CreateSingleUseUploadKeyAsync(new UploadFileMetadata("test.txt"));
 
