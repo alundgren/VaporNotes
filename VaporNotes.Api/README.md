@@ -1,6 +1,5 @@
 ﻿## Settings summary
-- VaporNotes:DropboxAppKey (to be removed)
-- VaporNotes:DropboxAppSecret (to be removed)
+- VaporNotes:ApiKey
 - VaporNotes:UiBaseUrl
 
 
@@ -9,8 +8,7 @@ To edit the app go here:
 https://www.dropbox.com/developers/apps
 
 Add app key/client id and app secret/client secret:
-> dotnet user-secrets set "VaporNotes:DropboxAppKey" "<...>"
-> dotnet user-secrets set "VaporNotes:DropboxAppSecret" "<...>"
+> dotnet user-secrets set "VaporNotes:ApiKey" "<...>"
 
 If you get a wierd error doing this then first call:
 > dotnet user-secrets init

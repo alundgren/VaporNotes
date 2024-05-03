@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using VaporNotes.Api;
@@ -35,7 +36,13 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // Define a default authorization policy that requires authentication
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<VaporNotesBearerToken>();
@@ -58,8 +65,15 @@ else
 
 app.UseCors(ApiCorsPolicyName);
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 var clock = new VaporNotesClock();
-app.MapPost("/api/notes/list", async (VaporNotesService service, ListNotesRequest request) => await service.GetNotesAsync());
+app.MapPost("/api/notes/list", async (VaporNotesService service, ListNotesRequest request, HttpContext context) =>
+{
+    Console.WriteLine(context.User.Identity.IsAuthenticated);
+     return await service.GetNotesAsync();
+});
 app.MapPost("/api/notes/add-text", async (VaporNotesService service, AddTextNoteRequest request) => await service.AddNoteAsync(request.Text));
 app.MapGet("/api/heartbeat", () => "Ok");
 app.MapGet("/api/test-delay", async () =>
