@@ -23,7 +23,7 @@ export class LoginComponent {
     });
 
     ngOnInit() {
-        this.authService.beginDropboxAuthorization().subscribe(x => this.authorizeUrl = x);
+        this.authService.beginAuthorization().subscribe(x => this.authorizeUrl = x);
     }
 
     completeAuthorize(evt ?: Event) {

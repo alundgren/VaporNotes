@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, map } from 'rxjs';
+import { BehaviorSubject, Observable, map, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../api.service';
 
@@ -53,17 +53,21 @@ export class AuthService {
         return this.router.createUrlTree(['/login']);
     }
 
-    beginDropboxAuthorization() {
-        return this.httpClient.post<string>(ApiService.getApiUrl('api/begin-authorize'), {});
+    beginAuthorization() {
+        return of('https://www.google.com');
     }
 
     completeDropboxAuthorization(code: string) {
-        return this.httpClient.post<DropboxAuthData>(ApiService.getApiUrl('api/complete-authorize'), { code }).pipe(map(x => {
-            sessionStorage.setItem(SessionStorageTokenKey, JSON.stringify(x));
-            localStorage.setItem(LocalStorageTokenKey, JSON.stringify(x));
-            this.authState.next(x);
-            return true;
-        }))
+        //Static code for now while replacing dropbox.
+        const auth : DropboxAuthData = {
+            expiresAtEpoch: Date.now() + 1000 * 60 * 60 * 24,
+            accessToken: code,
+            refreshToken: code
+        }
+        sessionStorage.setItem(SessionStorageTokenKey, JSON.stringify(auth));
+        localStorage.setItem(LocalStorageTokenKey, JSON.stringify(auth));
+        this.authState.next(auth);
+        return of(true);
     }
 
     logout() {
@@ -74,8 +78,8 @@ export class AuthService {
     }
 }
 
-const LocalStorageTokenKey = 'vapornotes_dropbox_access_local_2024032401'
-const SessionStorageTokenKey = 'vapornotes_dropbox_access_refresh_2024032401';
+const LocalStorageTokenKey = 'vapornotes_access_local_2024050301'
+const SessionStorageTokenKey = 'vapornotes_access_refresh_2024050301';
 
 interface DropboxAuthData {
     expiresAtEpoch: number,

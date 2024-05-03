@@ -42,7 +42,7 @@ builder.Services.AddTransient<VaporNotesBearerToken>();
 builder.Services.AddSingleton<IVaporNotesClock, VaporNotesClock>();
 builder.Services.AddTransient<VaporNotesService>();
 builder.Services.AddSingleton<PendingUploadStore>();
-builder.Services.AddSingleton<InMemoryDatabaseConnectionFactory>();
+builder.Services.AddSingleton<IDatabaseConnectionFactory, InMemoryDatabaseConnectionFactory>();
 
 var app = builder.Build();
 

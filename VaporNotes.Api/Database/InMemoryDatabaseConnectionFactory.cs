@@ -14,7 +14,7 @@ public class InMemoryDatabaseConnectionFactory : IDatabaseConnectionFactory, IDi
     private SqliteConnection keepAliveConnection;
    
 
-    public InMemoryDatabaseConnectionFactory(ILogger? logger)
+    public InMemoryDatabaseConnectionFactory(ILogger<InMemoryDatabaseConnectionFactory>? logger)
     {
         logger?.LogInformation("Using in memory database");
         dbName = Guid.NewGuid().ToString();
