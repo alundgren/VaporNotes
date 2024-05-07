@@ -1,8 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, NgZone, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { debugLog } from '../../../api.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
     selector: 'app-login',
@@ -12,7 +14,7 @@ import { CommonModule } from '@angular/common';
     styleUrl: './login.component.scss'
 })
 export class LoginComponent {
-    constructor(private authService: AuthService, private router: Router) {
+    constructor(private authService: AuthService, private router: Router, private ngZone: NgZone) {
 
     }
 
@@ -23,22 +25,28 @@ export class LoginComponent {
     });
 
     ngOnInit() {
-        this.authService.beginAuthorization().subscribe(x => this.authorizeUrl = x);
+        // @ts-ignore
+        google.accounts.id.initialize({
+            client_id: environment.googleClientId,
+            callback: this.handleCredentialResponse.bind(this),
+            use_fedcm_for_prompt: true
+        });
+        // @ts-ignore
+        google.accounts.id.renderButton(
+            // @ts-ignore
+            document.getElementById("google-button"),
+            { theme: "outline", size: "large", width: "100%" }
+        );
+        // @ts-ignore
+        google.accounts.id.prompt((notification: PromptMomentNotification) => {
+            debugLog(notification)
+        });
     }
 
-    completeAuthorize(evt ?: Event) {
-        evt?.preventDefault();
-        this.authService.completeDropboxAuthorization(this.loginForm.value.code!).subscribe(wasLoggedIn => {
-            if(wasLoggedIn) {
-                this.router.navigate(['secure/notes']);
-            }
-        });
-        /*
-        this.authService.login(this.loginForm.value.email ?? '', this.loginForm.value.password ?? '', false).subscribe(wasLoggedIn => {
-            if(wasLoggedIn) {
-                this.router.navigate(['secure/overview']);
-            }
-        });
-        */
-    }
+    async handleCredentialResponse(response: { credential: string }) {
+        this.ngZone.run(() => {
+            // Here will be your response from Google.
+            debugLog(response.credential);
+        })
+      }
 }

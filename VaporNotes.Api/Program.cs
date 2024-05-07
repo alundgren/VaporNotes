@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using VaporNotes.Api;
+using VaporNotes.Api.Core;
 using VaporNotes.Api.Database;
 using VaporNotes.Api.Domain;
 using VaporNotes.Api.Support;
 
 const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
+const string StaticKeyAuthenticateScheme = "StaticKey";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +21,6 @@ if (builder.Configuration["VAPORNOTES_IS_LOCALNETWORK"] == "true")
      */
     builder.Configuration.AddJsonFile("localNetwork.appsettings.json", optional: true);
 }
-
 
 builder.Services.AddEndpointsApiExplorer(); //https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddSwaggerGen();
@@ -35,13 +36,19 @@ builder.Services.AddCors(options =>
             policy.WithExposedHeaders("Content-Disposition"); //File download does not work properly otherwise
         });
 });
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = StaticKeyAuthenticateScheme;
+    //options.AddScheme("StaticKeyAuthenticateScheme", x => x.);
+});
 builder.Services.AddAuthorization(options =>
 {
     // Define a default authorization policy that requires authentication
     options.DefaultPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
+        .AddAuthenticationSchemes(StaticKeyAuthenticateScheme)
         .Build();
+    options.FallbackPolicy = options.DefaultPolicy;
 });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
@@ -65,17 +72,16 @@ else
 
 app.UseCors(ApiCorsPolicyName);
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseAuthenticationLogged();
+app.UseAuthorizationLogged();
 
 var clock = new VaporNotesClock();
 app.MapPost("/api/notes/list", async (VaporNotesService service, ListNotesRequest request, HttpContext context) =>
 {
-    Console.WriteLine(context.User.Identity.IsAuthenticated);
      return await service.GetNotesAsync();
 });
 app.MapPost("/api/notes/add-text", async (VaporNotesService service, AddTextNoteRequest request) => await service.AddNoteAsync(request.Text));
-app.MapGet("/api/heartbeat", () => "Ok");
+app.MapGet("/api/heartbeat", () => "Ok").RequireAuthorization();
 app.MapGet("/api/test-delay", async () =>
 {
     await Task.Delay(5000);
