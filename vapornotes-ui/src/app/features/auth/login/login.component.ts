@@ -6,6 +6,8 @@ import { CommonModule } from '@angular/common';
 import { debugLog } from '../../../api.service';
 import { environment } from '../../../../environments/environment';
 
+const TempKey = '07c4c60c-0b3e-4471-924c-d4537e28636a';
+
 @Component({
     selector: 'app-login',
     standalone: true,
@@ -25,28 +27,52 @@ export class LoginComponent {
     });
 
     ngOnInit() {
-        // @ts-ignore
-        google.accounts.id.initialize({
-            client_id: environment.googleClientId,
-            callback: this.handleCredentialResponse.bind(this),
-            use_fedcm_for_prompt: true
-        });
-        // @ts-ignore
-        google.accounts.id.renderButton(
+        let storedCredential = window.sessionStorage.getItem(TempKey);
+        if(storedCredential) {
+            this.handleCredentialResponse({ credential: storedCredential });
+        } else {
             // @ts-ignore
-            document.getElementById("google-button"),
-            { theme: "outline", size: "large", width: "100%" }
-        );
-        // @ts-ignore
-        google.accounts.id.prompt((notification: PromptMomentNotification) => {
-            debugLog(notification)
-        });
+            google.accounts.id.initialize({
+                client_id: environment.googleClientId,
+                callback: this.handleCredentialResponse.bind(this),
+                use_fedcm_for_prompt: true
+            });
+            // @ts-ignore
+            google.accounts.id.renderButton(
+                // @ts-ignore
+                document.getElementById("google-button"),
+                { theme: "outline", size: "large", width: "100%" }
+            );
+            // @ts-ignore
+            google.accounts.id.prompt((notification: PromptMomentNotification) => {
+                debugLog(notification)
+            });
+        }
     }
 
     async handleCredentialResponse(response: { credential: string }) {
         this.ngZone.run(() => {
             // Here will be your response from Google.
-            debugLog(response.credential);
+            debugLog(this.decodeJwtResponse(response.credential));
+            window.sessionStorage.setItem(TempKey, response.credential);
+            this.authService.convertGoogleIdTokenToApiAccessToken(response.credential).subscribe(x => {
+                debugLog(x.authToken);
+                this.authService.heartbeat('').subscribe(x => {
+
+                })
+                this.authService.heartbeat(x.authToken).subscribe(x => {
+
+                })
+            })
         })
-      }
+    }
+
+    private decodeJwtResponse(token: string) {
+        var base64Url = token.split('.')[1];
+        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        var jsonPayload = decodeURIComponent(window.atob(base64).split('').map((c) => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      };
 }

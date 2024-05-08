@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, map, of } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpRequest } from '@angular/common/http';
 import { ApiService } from '../../api.service';
 
 @Injectable({
@@ -47,6 +47,25 @@ export class AuthService {
                 })
             }
         })
+    }
+
+    public convertGoogleIdTokenToApiAccessToken(credential: string) {
+        return this.httpClient.post<{ authToken: string }>(ApiService.getApiUrl('api/id-test'), { idToken: credential });
+    }
+
+    public heartbeat(authToken: string) {
+        if(!authToken) {
+            return this.httpClient.post<any>(ApiService.getApiUrl('api/heartbeat'), { });
+        } else {
+            const headers = new HttpHeaders({
+                Authorization: `Bearer ${authToken}`,
+            });
+            const req = new HttpRequest('POST', ApiService.getApiUrl('api/heartbeat'), { }, {
+                responseType: 'json',
+                headers: headers
+            });
+            return this.httpClient.request<any>(req);
+        }
     }
 
     getLocalLoginUrl() {

@@ -21,6 +21,18 @@ Found in the /environments.
 - apiBaseUrl: Location of the backend api
 - isDebugLogEnabled: console logging of various things
 - isProduction: true/false. When false some extra test functions are exposed.
+- googleClientId: Client id for google login
+
+# Google login
+
+Handle client secret and redirect urls here:
+https://console.cloud.google.com/
+
+Guide to google login:
+https://developers.google.com/identity/gsi/web/guides/overview
+
+Promising guide:
+https://dev.to/christianzink/how-to-sign-in-with-google-in-angular-and-use-jwt-based-net-core-api-authentication-rsa-1anl
 
 # Docker
 Build

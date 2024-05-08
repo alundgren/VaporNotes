@@ -1,14 +1,16 @@
+using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using VaporNotes.Api;
-using VaporNotes.Api.Core;
 using VaporNotes.Api.Database;
 using VaporNotes.Api.Domain;
+using VaporNotes.Api.GoogleAuthentication;
 using VaporNotes.Api.Support;
 
 const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
-const string StaticKeyAuthenticateScheme = "StaticKey";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,20 +38,32 @@ builder.Services.AddCors(options =>
             policy.WithExposedHeaders("Content-Disposition"); //File download does not work properly otherwise
         });
 });
+
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = StaticKeyAuthenticateScheme;
-    //options.AddScheme("StaticKeyAuthenticateScheme", x => x.);
-});
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer();
+builder.Services.AddTransient<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
 builder.Services.AddAuthorization(options =>
 {
     // Define a default authorization policy that requires authentication
     options.DefaultPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
-        .AddAuthenticationSchemes(StaticKeyAuthenticateScheme)
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
         .Build();
-    options.FallbackPolicy = options.DefaultPolicy;
+    //TODO: Enable after figuring out how to allow anon for the auth endpoint
+    //options.FallbackPolicy = options.DefaultPolicy;
 });
+/*
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = StaticKeyAuthenticateScheme;
+    //options.AddScheme("StaticKeyAuthenticateScheme", x => x.);
+});
+
+*/
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<VaporNotesBearerToken>();
@@ -71,17 +85,17 @@ else
 }
 
 app.UseCors(ApiCorsPolicyName);
-
+/*
 app.UseAuthenticationLogged();
 app.UseAuthorizationLogged();
-
+*/
 var clock = new VaporNotesClock();
 app.MapPost("/api/notes/list", async (VaporNotesService service, ListNotesRequest request, HttpContext context) =>
 {
      return await service.GetNotesAsync();
 });
 app.MapPost("/api/notes/add-text", async (VaporNotesService service, AddTextNoteRequest request) => await service.AddNoteAsync(request.Text));
-app.MapGet("/api/heartbeat", () => "Ok").RequireAuthorization();
+app.MapPost("/api/heartbeat", () => "Ok").RequireAuthorization();
 app.MapGet("/api/test-delay", async () =>
 {
     await Task.Delay(5000);
@@ -109,5 +123,19 @@ app.MapGet("/api/download/attached-file/{noteId}", async ([Required][FromRoute] 
     //TODO: contentType
     return Results.File(result.Value.Data, fileDownloadName: result.Value.Filename);
 });
+
+app.MapPost("/api/id-test", async ([Required] AuthenticateRequest request, HttpContext context) =>
+{
+    var generator = new JwtGenerator(JwtGenerator.PrivateKey);
+
+    GoogleJsonWebSignature.ValidationSettings settings = new GoogleJsonWebSignature.ValidationSettings();
+
+    // Change this to your google client ID
+    settings.Audience = new List<string>() { "247237318435-g18gfog0e05vf6c7r8adeo1k9imvqfa4.apps.googleusercontent.com" };
+
+    GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
+    return new { AuthToken = generator.CreateUserAuthToken(payload.Email) };
+})
+.AllowAnonymous();
 
 app.Run();
