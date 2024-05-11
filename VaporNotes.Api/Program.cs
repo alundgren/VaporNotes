@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using VaporNotes.Api;
 using VaporNotes.Api.Database;
 using VaporNotes.Api.Domain;
-using VaporNotes.Api.GoogleAuthentication;
+using VaporNotes.Api.Features.Auth.GoogleAuthentication;
 using VaporNotes.Api.Support;
 
 const string ApiCorsPolicyName = "UiApiCallsCorsPolicy";
@@ -45,6 +45,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer();
+builder.Services.AddSingleton<VaporNotesJwtSigningKey>();
 builder.Services.AddTransient<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
 builder.Services.AddAuthorization(options =>
 {
@@ -124,9 +125,9 @@ app.MapGet("/api/download/attached-file/{noteId}", async ([Required][FromRoute] 
     return Results.File(result.Value.Data, fileDownloadName: result.Value.Filename);
 });
 
-app.MapPost("/api/id-test", async ([Required] AuthenticateRequest request, HttpContext context) =>
+app.MapPost("/api/id-test", async ([Required] AuthenticateRequest request, HttpContext context, VaporNotesJwtSigningKey key) =>
 {
-    var generator = new JwtGenerator(JwtGenerator.PrivateKey);
+    var generator = new JwtGenerator(key);
 
     GoogleJsonWebSignature.ValidationSettings settings = new GoogleJsonWebSignature.ValidationSettings();
 

@@ -57,9 +57,6 @@ export class LoginComponent {
             window.sessionStorage.setItem(TempKey, response.credential);
             this.authService.convertGoogleIdTokenToApiAccessToken(response.credential).subscribe(x => {
                 debugLog(x.authToken);
-                this.authService.heartbeat('').subscribe(x => {
-
-                })
                 this.authService.heartbeat(x.authToken).subscribe(x => {
 
                 })

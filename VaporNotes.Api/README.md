@@ -1,14 +1,19 @@
 ﻿## Settings summary
-- VaporNotes:ApiKey
-- VaporNotes:UiBaseUrl
+- VaporNotes:UiBaseUrl: Base url of the web app
+- VaporNotes:GoogleClientId: Client id for google authentication (Note: exposed publicly in the web app so this is not a secret)
+- VaporNotes:AccessPublicKey: Public key for the access token jwt
+- VaporNotes:AccessPrivateKey: Private key for the acces token jwt
 
+## Authentication
+- The uses logs in the their google account in the ui and passes the id token to api/authenticate.
+- This issues them an access token that can be used with all the other apis.
 
-## Dropbox api keys
-To edit the app go here:
-https://www.dropbox.com/developers/apps
+Besides the client id for google auth that must match what is set in a public/private keypair is used to sign the access token jwt. 
+This will be automatically generated if VaporNotes:JwtSigningKey is missing but lost when the api recycles if used this way.
 
+## Local development secrets
 Add app key/client id and app secret/client secret:
-> dotnet user-secrets set "VaporNotes:ApiKey" "<...>"
+> dotnet user-secrets set "VaporNotes:JwtSigningKey" "<...>"
 
 If you get a wierd error doing this then first call:
 > dotnet user-secrets init
