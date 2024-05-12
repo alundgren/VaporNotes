@@ -5,8 +5,9 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { debugLog } from '../../../api.service';
 import { environment } from '../../../../environments/environment';
+import { add, formatISO, parseISO } from 'date-fns';
 
-const TempKey = '07c4c60c-0b3e-4471-924c-d4537e28636a';
+const NextAllowedLoginAttemptTimeKey = '0bc0783e-c396-4dca-9dd2-e9f9e10d6543';
 
 @Component({
     selector: 'app-login',
@@ -27,39 +28,44 @@ export class LoginComponent {
     });
 
     ngOnInit() {
-        let storedCredential = window.sessionStorage.getItem(TempKey);
-        if(storedCredential) {
-            this.handleCredentialResponse({ credential: storedCredential });
-        } else {
-            // @ts-ignore
-            google.accounts.id.initialize({
-                client_id: environment.googleClientId,
-                callback: this.handleCredentialResponse.bind(this),
-                use_fedcm_for_prompt: true
-            });
-            // @ts-ignore
-            google.accounts.id.renderButton(
-                // @ts-ignore
-                document.getElementById("google-button"),
-                { theme: "outline", size: "large", width: "100%" }
-            );
-            // @ts-ignore
-            google.accounts.id.prompt((notification: PromptMomentNotification) => {
-                debugLog(notification)
-            });
+        let nextAllowedLoginAttemptTimeRaw = window.localStorage.getItem(NextAllowedLoginAttemptTimeKey);
+        if(nextAllowedLoginAttemptTimeRaw && parseISO(nextAllowedLoginAttemptTimeRaw) > new Date()) {
+            debugLog('Next login attempt allowed at: ' + nextAllowedLoginAttemptTimeRaw);
+            return;
         }
+
+        window.localStorage.setItem(NextAllowedLoginAttemptTimeKey, formatISO(add(new Date(), { minutes: 1 })));
+        debugLog('login attempt allowed');
+
+        // @ts-ignore
+        google.accounts.id.initialize({
+            client_id: environment.googleClientId,
+            callback: this.handleCredentialResponse.bind(this),
+            use_fedcm_for_prompt: true
+        });
+        // @ts-ignore
+        google.accounts.id.renderButton(
+            // @ts-ignore
+            document.getElementById("google-button"),
+            { theme: "outline", size: "large", width: "100%" }
+        );
+        // @ts-ignore
+        google.accounts.id.prompt((notification: PromptMomentNotification) => {
+            debugLog(notification)
+        });
+
+        //TODO: Unsub
+        this.authService.authState.subscribe(x => {
+            if(this.authService.isStateAuthenticated(x)) {
+                this.router.navigate(['/secure/notes']);
+            }
+        })
     }
 
     async handleCredentialResponse(response: { credential: string }) {
         this.ngZone.run(async () => {
             debugLog(this.decodeJwtResponse(response.credential));
-            window.sessionStorage.setItem(TempKey, response.credential);
-            const isAuthenticated = await this.authService.authenticateWithGoogleIdToken(response.credential);
-            if(isAuthenticated) {
-                this.router.navigate(['/secure/notes']);
-            } else {
-                debugLog("Authentication failed");
-            }
+            this.authService.authenticateWithGoogleIdToken(response.credential);
         })
     }
 
