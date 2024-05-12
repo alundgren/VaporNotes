@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using VaporNotes.Api;
 using VaporNotes.Api.Database;
 using VaporNotes.Api.Domain;
+using VaporNotes.Api.Features.Auth;
 using VaporNotes.Api.Features.Auth.GoogleAuthentication;
 using VaporNotes.Api.Support;
 
@@ -46,6 +47,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer();
 builder.Services.AddSingleton<VaporNotesJwtSigningKey>();
+builder.Services.AddScoped<VaporNotesAuthenticationService>();
 builder.Services.AddTransient<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
 builder.Services.AddAuthorization(options =>
 {
@@ -96,14 +98,7 @@ app.MapPost("/api/notes/list", async (VaporNotesService service, ListNotesReques
      return await service.GetNotesAsync();
 });
 app.MapPost("/api/notes/add-text", async (VaporNotesService service, AddTextNoteRequest request) => await service.AddNoteAsync(request.Text));
-app.MapPost("/api/heartbeat", () => "Ok").RequireAuthorization();
-app.MapGet("/api/test-delay", async () =>
-{
-    await Task.Delay(5000);
-    return "Ok";
-});
-
-//TODO: Would be better if we could upload directly to dropbox.
+app.MapPost("/api/heartbeat", () => new { status = "Ok" });
 app.MapPost("/api/upload/begin", async (VaporNotesService service, [Required]UploadFileMetadata file) => new
 {
     UploadKey = await service.CreateSingleUseUploadKeyAsync(file)
@@ -125,18 +120,6 @@ app.MapGet("/api/download/attached-file/{noteId}", async ([Required][FromRoute] 
     return Results.File(result.Value.Data, fileDownloadName: result.Value.Filename);
 });
 
-app.MapPost("/api/id-test", async ([Required] AuthenticateRequest request, HttpContext context, VaporNotesJwtSigningKey key) =>
-{
-    var generator = new JwtGenerator(key);
-
-    GoogleJsonWebSignature.ValidationSettings settings = new GoogleJsonWebSignature.ValidationSettings();
-
-    // Change this to your google client ID
-    settings.Audience = new List<string>() { "247237318435-g18gfog0e05vf6c7r8adeo1k9imvqfa4.apps.googleusercontent.com" };
-
-    GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
-    return new { AuthToken = generator.CreateUserAuthToken(payload.Email) };
-})
-.AllowAnonymous();
+app.MapPost("/api/authenticate", ([Required] AuthenticateRequest request, VaporNotesAuthenticationService service) => service.AuthenticateAsync(request));
 
 app.Run();

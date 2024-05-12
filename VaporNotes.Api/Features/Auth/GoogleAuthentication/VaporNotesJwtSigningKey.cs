@@ -1,6 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
-using VaporNotes.Api.Support;
 
 namespace VaporNotes.Api.Features.Auth.GoogleAuthentication;
 

@@ -1,4 +1,4 @@
-import { Component, NgZone, inject } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
@@ -51,16 +51,15 @@ export class LoginComponent {
     }
 
     async handleCredentialResponse(response: { credential: string }) {
-        this.ngZone.run(() => {
-            // Here will be your response from Google.
+        this.ngZone.run(async () => {
             debugLog(this.decodeJwtResponse(response.credential));
             window.sessionStorage.setItem(TempKey, response.credential);
-            this.authService.convertGoogleIdTokenToApiAccessToken(response.credential).subscribe(x => {
-                debugLog(x.authToken);
-                this.authService.heartbeat(x.authToken).subscribe(x => {
-
-                })
-            })
+            const isAuthenticated = await this.authService.authenticateWithGoogleIdToken(response.credential);
+            if(isAuthenticated) {
+                this.router.navigate(['/secure/notes']);
+            } else {
+                debugLog("Authentication failed");
+            }
         })
     }
 

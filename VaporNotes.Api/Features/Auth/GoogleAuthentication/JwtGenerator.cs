@@ -6,7 +6,7 @@ namespace VaporNotes.Api.Features.Auth.GoogleAuthentication;
 
 public class JwtGenerator(VaporNotesJwtSigningKey signingKey)
 {
-    public string CreateUserAuthToken(string userId)
+    public string CreateUserAccessToken(string userId, DateTimeOffset expirationDate)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -17,7 +17,7 @@ public class JwtGenerator(VaporNotesJwtSigningKey signingKey)
             {
                 new Claim(ClaimTypes.Sid, userId.ToString())
             }),
-            Expires = DateTime.UtcNow.AddMinutes(60),
+            Expires = expirationDate.UtcDateTime,
             SigningCredentials = new SigningCredentials(signingKey.GetKey(), VaporNotesJwtSigningKey.SymmetricKeySignatureAlgorithmName)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);

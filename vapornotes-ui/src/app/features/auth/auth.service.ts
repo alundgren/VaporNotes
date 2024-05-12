@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, map, of } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, map, of } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpRequest } from '@angular/common/http';
 import { ApiService } from '../../api.service';
 
@@ -49,23 +49,21 @@ export class AuthService {
         })
     }
 
-    public convertGoogleIdTokenToApiAccessToken(credential: string) {
-        return this.httpClient.post<{ authToken: string }>(ApiService.getApiUrl('api/id-test'), { idToken: credential });
-    }
+    public async authenticateWithGoogleIdToken(googleIdToken: string) {
+        const url = ApiService.getApiUrl('api/authenticate');
+        const request = { idToken: googleIdToken };
+        const {accessToken, expirationDate} = await firstValueFrom(this.httpClient.post<{ accessToken: string, expirationDate: Date }>(url, request));
 
-    public heartbeat(authToken: string) {
-        if(!authToken) {
-            return this.httpClient.post<any>(ApiService.getApiUrl('api/heartbeat'), { });
-        } else {
-            const headers = new HttpHeaders({
-                Authorization: `Bearer ${authToken}`,
-            });
-            const req = new HttpRequest('POST', ApiService.getApiUrl('api/heartbeat'), { }, {
-                responseType: 'json',
-                headers: headers
-            });
-            return this.httpClient.request<any>(req);
+        const auth : DropboxAuthData = {
+            expiresAtEpoch: expirationDate.valueOf(),
+            accessToken: accessToken,
+            refreshToken: null
         }
+        sessionStorage.setItem(SessionStorageTokenKey, JSON.stringify(auth));
+        localStorage.setItem(LocalStorageTokenKey, JSON.stringify(auth));
+        this.authState.next(auth);
+
+        return true;
     }
 
     getLocalLoginUrl() {
@@ -76,7 +74,7 @@ export class AuthService {
         return of('https://www.google.com');
     }
 
-    completeDropboxAuthorization(code: string) {
+    private setAuthState(code: string) {
         //Static code for now while replacing dropbox.
         const auth : DropboxAuthData = {
             expiresAtEpoch: Date.now() + 1000 * 60 * 60 * 24,
@@ -103,5 +101,5 @@ const SessionStorageTokenKey = 'vapornotes_access_refresh_2024050301';
 interface DropboxAuthData {
     expiresAtEpoch: number,
     accessToken: string,
-    refreshToken: string
+    refreshToken : string | null
 }
