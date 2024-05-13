@@ -107,9 +107,9 @@ export class ApiService {
     }
 }
 
-export function debugLog(text: string) {
+export function debugLog(content: any) {
     if (environment.isDebugLogEnabled) {
-        console.log(text);
+        console.log(content);
     }
 }
 

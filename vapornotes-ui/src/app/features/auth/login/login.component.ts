@@ -5,9 +5,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { debugLog } from '../../../api.service';
 import { environment } from '../../../../environments/environment';
-import { add, formatISO, parseISO } from 'date-fns';
-
-const NextAllowedLoginAttemptTimeKey = '0bc0783e-c396-4dca-9dd2-e9f9e10d6543';
+import { LocalStorageItem } from '../../localStorage/localStorageItem';
 
 @Component({
     selector: 'app-login',
@@ -21,22 +19,32 @@ export class LoginComponent {
 
     }
 
+    isLoginOnCooldown = new LocalStorageItem<boolean>('isLoginOnCooldown', { expiresAfterMinutes: 1 });
+    cachedGoogleIdToken = new LocalStorageItem<string>('cachedGoogleIdToken', { expiresAfterMinutes: 30 });
+
     authorizeUrl: string | null = null;
 
     loginForm = new FormGroup({
         code: new FormControl('', [Validators.required])
     });
 
-    ngOnInit() {
-        let nextAllowedLoginAttemptTimeRaw = window.localStorage.getItem(NextAllowedLoginAttemptTimeKey);
-        if(nextAllowedLoginAttemptTimeRaw && parseISO(nextAllowedLoginAttemptTimeRaw) > new Date()) {
-            debugLog('Next login attempt allowed at: ' + nextAllowedLoginAttemptTimeRaw);
+    async ngOnInit() {
+        const cachedIdToken = this.cachedGoogleIdToken.get();
+        if(cachedIdToken) {
+            this.authenticateWithGoogleIdToken(cachedIdToken)
             return;
         }
 
-        window.localStorage.setItem(NextAllowedLoginAttemptTimeKey, formatISO(add(new Date(), { minutes: 1 })));
-        debugLog('login attempt allowed');
+        if(this.isLoginOnCooldown.get() === true) {
+            return;
+        }
+        this.isLoginOnCooldown.set(true);
 
+        this.initiateGoogleLogin();
+
+    }
+
+    private initiateGoogleLogin() {
         // @ts-ignore
         google.accounts.id.initialize({
             client_id: environment.googleClientId,
@@ -53,22 +61,26 @@ export class LoginComponent {
         google.accounts.id.prompt((notification: PromptMomentNotification) => {
             debugLog(notification)
         });
-
-        //TODO: Unsub
-        this.authService.authState.subscribe(x => {
-            if(this.authService.isStateAuthenticated(x)) {
-                this.router.navigate(['/secure/notes']);
-            }
-        })
     }
 
-    async handleCredentialResponse(response: { credential: string }) {
+    private async handleCredentialResponse(response: { credential: string }) {
         this.ngZone.run(async () => {
-            debugLog(this.decodeJwtResponse(response.credential));
-            this.authService.authenticateWithGoogleIdToken(response.credential);
+            if(!response.credential) {
+                return;
+            }
+            this.cachedGoogleIdToken.set(response.credential);
+            this.authenticateWithGoogleIdToken(response.credential);
         })
     }
 
+    private async authenticateWithGoogleIdToken(idToken: string) {
+        const isLoggedIn = await this.authService.authenticateWithGoogleIdToken(idToken);
+        if(isLoggedIn) {
+            this.router.navigate(['/secure/notes']);
+        }
+    }
+
+    /* Kept around for future use. Can get email / user name for instance
     private decodeJwtResponse(token: string) {
         var base64Url = token.split('.')[1];
         var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -77,4 +89,5 @@ export class LoginComponent {
         }).join(''));
         return JSON.parse(jsonPayload);
       };
+      */
 }

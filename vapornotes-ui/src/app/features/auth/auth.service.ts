@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, firstValueFrom, map, of } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpRequest } from '@angular/common/http';
 import { ApiService, debugLog } from '../../api.service';
+import { parseJSON as dateFnsParseJSON } from 'date-fns';
 
 @Injectable({
     providedIn: 'root'
@@ -10,15 +11,15 @@ import { ApiService, debugLog } from '../../api.service';
 export class AuthService {
     constructor(private httpClient: HttpClient, private router: Router) {
         const storedAuthRaw = sessionStorage.getItem(SessionStorageTokenKey) ?? localStorage.getItem(LocalStorageTokenKey);
-        const auth: DropboxAuthData = storedAuthRaw ? JSON.parse(storedAuthRaw) : null;
-        this.authState = new BehaviorSubject<DropboxAuthData | null>(auth
+        const auth: AuthData = storedAuthRaw ? JSON.parse(storedAuthRaw) : null;
+        this.authState = new BehaviorSubject<AuthData | null>(auth
             ? auth
             : null);
     }
 
-    public readonly authState: BehaviorSubject<DropboxAuthData | null>;
+    public readonly authState: BehaviorSubject<AuthData | null>;
 
-    public isStateAuthenticated(state: DropboxAuthData | null) {
+    public isStateAuthenticated(state: AuthData | null) {
         return (state && state.expiresAtEpoch > Date.now());
     }
 
@@ -44,7 +45,7 @@ export class AuthService {
                 x.complete();
                 this.router.navigateByUrl(this.getLocalLoginUrl());
             } else {
-                this.httpClient.post<DropboxAuthData>(ApiService.getApiUrl('api/refresh-authorize'), { refreshToken: a.refreshToken }).subscribe(y => {
+                this.httpClient.post<AuthData>(ApiService.getApiUrl('api/refresh-authorize'), { refreshToken: a.refreshToken }).subscribe(y => {
                     this.authState.next(y);
                     x.next(y.accessToken);
                     x.complete();
@@ -56,16 +57,19 @@ export class AuthService {
     public async authenticateWithGoogleIdToken(googleIdToken: string) {
         const url = ApiService.getApiUrl('api/authenticate');
         const request = { idToken: googleIdToken };
-        return this.httpClient.post<{ accessToken: string, expirationDate: Date }>(url, request).pipe(map(x => {
-            const auth : DropboxAuthData = {
-                expiresAtEpoch: x.expirationDate.valueOf(),
-                accessToken: x.accessToken,
-                refreshToken: null
-            }
-            sessionStorage.setItem(SessionStorageTokenKey, JSON.stringify(auth));
-            localStorage.setItem(LocalStorageTokenKey, JSON.stringify(auth));
-            this.authState.next(auth);
-        }));
+        const { accessToken, expirationDate } = await firstValueFrom(this.httpClient.post<{ accessToken: string, expirationDate: string }>(url, request));
+
+        const auth : AuthData = {
+            expiresAtEpoch: dateFnsParseJSON(expirationDate).valueOf(),
+            accessToken: accessToken,
+            refreshToken: null
+        }
+
+        sessionStorage.setItem(SessionStorageTokenKey, JSON.stringify(auth));
+        localStorage.setItem(LocalStorageTokenKey, JSON.stringify(auth));
+        this.authState.next(auth);
+
+        return true;
     }
 
     getLocalLoginUrl() {
@@ -83,7 +87,7 @@ export class AuthService {
 const LocalStorageTokenKey = 'vapornotes_access_local_20240512.01'
 const SessionStorageTokenKey = 'vapornotes_access_refresh_20240512.01';
 
-interface DropboxAuthData {
+interface AuthData {
     expiresAtEpoch: number,
     accessToken: string,
     refreshToken : string | null
